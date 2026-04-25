@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MKA Workflow Specification",
+  "type": "object",
+  "required": ["id", "intent", "nodes"],
+  "properties": {
+    "id": { "type": "string" },
+    "intent": { "type": "string" },
+    "nodes": {
+      "type": "array",
+      "description": "A flat collection of files and methods involved in this workflow.",
+      "items": {
+        "type": "object",
+        "required": ["file"],
+        "properties": {
+          "file": { "type": "string" },
+          "method": { "type": "string", "description": "Optional: Specific entry point or affected method." },
+          "note": { "type": "string", "description": "Crucial context." }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "test_file": { "type": "string", "description": "Path to the primary test suite for this workflow." }
+      }
+    }
+  }
+}
