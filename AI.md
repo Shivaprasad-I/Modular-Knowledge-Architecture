@@ -1,16 +1,24 @@
-# AI Bootstrap: Modular Knowledge Architecture (MKA)
+# AI Knowledge Entry Point (MKA Protocol)
 
-This project utilizes the **Modular Knowledge Architecture (MKA)** for optimized AI context management.
+This project uses **Modular Knowledge Architecture (MKA)**. You MUST follow these rules for every task.
 
-## Instructions for AI Agents
-To ensure efficient and accurate assistance, please adhere to the following protocol:
+## 1. Core Mandates for **Efficiency**
+- **Efficiency:** Rely on the MKA index to navigate based on intent, before reading the entire codebase.
 
-1. **Do not ingest the entire codebase.** This project is designed for surgical retrieval.
-2. **Consult the Index:** Your primary entry point is [.ProjInfo/WorkFlows.md](.ProjInfo/WorkFlows.md).
-3. **Trace Workflows:** Use the paths and anchors defined in the Index to find relevant detail files in `.ProjInfo/Workflows/`.
-4. **Maintain the MKA:** When adding or modifying features, you must update the corresponding surgical documentation and ensure all file paths and method names are explicitly stated.
+## 2. Technical Navigation (Workflows)
+1. Read `.MKA/index.mka.yaml` to identify the functional workflow for your task.
+2. Follow the `path` to the specific `.mka.yaml` file for the technical "Mini-Map."
 
-## Architecture Structure
-- `AI.md`: This file (Bootstrap).
-- `.ProjInfo/WorkFlows.md`: Functional Index & Registry.
-- `.ProjInfo/Workflows/`: Technical detail files.
+## 4. Fallback Responsibility
+MKA does not replace your standard engineering tools.
+- If the MKA index is missing information, you MUST use `grep_search`, `glob`, or other discovery tools to find the truth in code.
+- On discovering missing paths via traditional search, you are expected to **add that workflow to MKA** to take advantage in future sessions.
+
+## 3. Project-Specific Triggers (Refer as Needed)
+Refer to these files **ONLY** when your task matches the trigger:
+
+- **Trigger:** The user explicitly asks to "Update Documentation" or "Finalize MKA."
+  - **Refer:** `.MKA/Procedures/MkaMaintenance.md`
+
+---
+*MKA is designed for token efficiency. Only read detailed workflow, procedure, or maintenance files when they are directly triggered by the current task.*
