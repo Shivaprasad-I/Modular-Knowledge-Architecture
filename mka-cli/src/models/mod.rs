@@ -1,5 +1,5 @@
 pub mod enums;
-
+pub mod configs;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

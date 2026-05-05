@@ -5,7 +5,7 @@ mod commands;
 
 use clap::Parser;
 use anyhow::Result;
-use crate::models::enums::cli_commands::Commands;
+use crate::models::enums::Commands;
 
 #[derive(Parser)]
 #[command(name = "mka")]

@@ -4,9 +4,10 @@ use anyhow::{Result, Context};
 use crate::models::{MkaIndex, Workflow};
 use crate::utils::validate_yaml;
 use crate::analyzer::{DynamicLanguageLoader, SourceAnalyzer};
+use crate::models::configs::Config;
 
 pub fn handle(id: &str, view: bool) -> Result<()> {
-    let index_path = Path::new(".MKA/index.mka.yaml");
+    let index_path = Path::new(Config::INDEX_FILE);
     let content = fs::read_to_string(index_path)?;
     let index: MkaIndex = serde_yaml::from_str(&content)?;
 
@@ -14,10 +15,10 @@ pub fn handle(id: &str, view: bool) -> Result<()> {
         .find(|w| w.id == id)
         .context(format!("Feature '{}' not found in index.", id))?;
 
-    let workflow_path = Path::new(".MKA").join(&workflow_summary.path);
+    let workflow_path = Path::new(Config::MAIN_FOLDER).join(&workflow_summary.path);
     let workflow_content = fs::read_to_string(&workflow_path)?;
     
-    let schema_path = Path::new(".MKA/schema.json");
+    let schema_path = Path::new(Config::SCHEMA_FILE);
     validate_yaml(&workflow_content, schema_path)?;
     
     let workflow: Workflow = serde_yaml::from_str(&workflow_content)?;
@@ -45,6 +46,7 @@ pub fn handle(id: &str, view: bool) -> Result<()> {
             "rs" => "rust",
             "ts" | "tsx" | "js" | "jsx" => "typescript",
             "py" => "python",
+            "cs" => "c_sharp",
             _ => {
                 node_obj.insert("error".to_string(), serde_json::json!("UNSUPPORTED EXTENSION"));
                 nodes_array.push(serde_json::json!(node_obj));

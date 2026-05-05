@@ -17,7 +17,6 @@ impl DynamicLanguageLoader {
         let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
         let possible_paths = vec![
             format!("{}/.local/share/nvim/lazy/nvim-treesitter/parser/{}.so", home, lang_name), // Neovim (lazy.nvim)
-            format!("{}/.local/share/nvim/site/pack/packer/start/nvim-treesitter/parser/{}.so", home, lang_name), // Neovim (packer.nvim)
             format!("{}/.cache/tree-sitter/lib/{}.so", home, lang_name),
             format!("/usr/local/lib/tree-sitter-{}.so", lang_name),
             format!("./parsers/{}.so", lang_name),
@@ -105,7 +104,7 @@ impl SourceAnalyzer {
             if let Ok(query) = Query::new(self.language, q_str) {
                 let matches = cursor.matches(&query, tree.root_node(), self.source_code.as_bytes());
                 for m in matches {
-                    for capture in m.captures {
+                    if let Some(capture) = m.captures.iter().next() {
                         let node = capture.node.parent().unwrap_or(capture.node);
                         return self.minify_node(node);
                     }
