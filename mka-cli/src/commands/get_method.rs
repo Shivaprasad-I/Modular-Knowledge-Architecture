@@ -12,6 +12,7 @@ pub fn handle(path: &str, method: &str) -> Result<()> {
 
     let lang_name = get_language_from_path(file_path)
         .context(format!("Unsupported file extension: {:?}", file_path.extension()))?;
+    let extension = file_path.extension().and_then(|s| s.to_str()).unwrap_or(lang_name);
 
     let source = fs::read_to_string(file_path)?;
     let mut loader = DynamicLanguageLoader::new();
@@ -22,7 +23,7 @@ pub fn handle(path: &str, method: &str) -> Result<()> {
     let minified = analyzer.get_minified_logic(method)?;
     
     println!("@mka:snippet:{}:{}", path, method);
-    println!("```{}", lang_name);
+    println!("```{}", extension);
     println!("{}", minified);
     println!("```");
 

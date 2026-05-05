@@ -37,6 +37,7 @@ pub fn handle(id: &str, view: bool) -> Result<()> {
 
             let source = fs::read_to_string(file_path)?;
             let lang_name = crate::utils::get_language_from_path(file_path).unwrap_or("text");
+            let extension = file_path.extension().and_then(|s| s.to_str()).unwrap_or(lang_name);
 
             match loader.load_language(lang_name) {
                 Ok(lang) => {
@@ -52,7 +53,7 @@ pub fn handle(id: &str, view: bool) -> Result<()> {
                             
                             if let Ok(minified) = analyzer.get_minified_logic(method_name) {
                                 println!("**snippet:**");
-                                println!("```{}", lang_name);
+                                println!("```{}", extension);
                                 println!("{}", minified);
                                 println!("```\n");
                             }

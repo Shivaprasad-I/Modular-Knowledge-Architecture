@@ -5,13 +5,13 @@ This project uses **Modular Knowledge Architecture (MKA)**. You MUST follow thes
 ## 1. Core Mandates for **Efficiency**
 - **Efficiency:** Use the `mka` utility to navigate based on intent. It provides context in TOON (Token Oriented Object Notation) which is highly token-efficient.
 
-## 2. Technical Navigation (Workflows)
+## 2. Technical Navigation (Workflows/features)
 1. Run `mka features-list` to identify the functional workflow for your task.
 2. Run `mka feature <id>` to get the technical "Mini-Map" (signatures, notes).
 3. Run `mka feature <id> --view` if you need to understand the logic flow without reading the entire source file.
 4. Run `mka get-method <path> <method>` to surgically extract logic for a specific function outside of defined workflows.
 
-## 4. Project-Specific Triggers (Refer as Needed)
+## 3. Project-Specific Triggers (Refer as Needed)
 Refer to these files **ONLY** when your task matches the trigger:
 
 - **Trigger:** The user explicitly asks to "Update Documentation" or "Finalize MKA."
