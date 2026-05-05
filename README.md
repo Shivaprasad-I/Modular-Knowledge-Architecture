@@ -44,19 +44,28 @@ Instead of a single giant "Rules" file that the AI must read every turn, we spli
 ---
 
 ## 🚀 How to Bootstrap
-Provide `.MKA/AI.md` as the primary context for the AI.
+The fastest way to use MKA is through our dedicated Rust utility: **`mka-cli`**.
 
-### Implementation Workflow:
-1. **Develop:** The AI uses the MKA index to navigate but focuses entirely on implementation.
-2. **Finalize:** Once code changes are done, tell the AI: **"Update the MKA documentation."**
-3. **Review:** The AI will read `.MKA/Instructions.md` and surgically update the registry before you commit.
+### 1. Build the Utility
+```bash
+cd mka-cli
+cargo build --release
+```
 
-## Directory Structure
-- `AI.md`: The central orchestrator (Must-read for AI).
-- `.MKA/Procedures/MkaMaintenance.md`: The "Librarian's Manual" (Triggered only on-demand).
-- `index.mka.yaml`: Master registry for Functional Workflows.
-- `Workflows/`: Surgical YAML maps of execution paths.
-- `Procedures/`: Narrative markdown files for case-specific project standards.
+### 2. Initialize a Project
+In your project root, run:
+```bash
+/path/to/mka init
+```
+This will clone the `.MKA` structure via sparse-checkout directly from this repository.
+
+### 3. Usage for AI
+Provide `AI.md` as the primary context for the AI. The AI will then use the `mka` command to:
+- **`mka features`**: List available technical mini-maps.
+- **`mka feature <id> [--view]`**: Explore specific features with token-efficient logic views.
+- **`mka sync`**: Automatically repair documentation that has fallen out of sync.
 
 ---
+
+## 🏗️ Project Procedures & Standards
 *MKA is an experimental project indexing system. It assumes that the code is the truth, and the documentation is the map.*

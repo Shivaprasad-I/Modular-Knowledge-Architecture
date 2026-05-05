@@ -1,0 +1,23 @@
+id: mka-feature-details
+intent: "Extract and display detailed technical information for a specific feature, including signatures and minified logic."
+nodes:
+  - file: "mka-cli/src/main.rs"
+    method: "main"
+    note: "Routes to the feature command with optional --view flag."
+  - file: "mka-cli/src/commands/feature.rs"
+    method: "handle"
+    note: "Orchestrates YAML validation, source analysis, and TOON output."
+  - file: "mka-cli/src/analyzer/mod.rs"
+    method: "get_method_signature"
+    note: "Uses Tree-sitter AST to extract precise method signatures."
+  - file: "mka-cli/src/analyzer/mod.rs"
+    method: "get_minified_logic"
+    note: "Strips comments and boilerplate to provide token-efficient logic view."
+  - file: "mka-cli/src/analyzer/mod.rs"
+    method: "detect_models"
+    note: "Automatically identifies and extracts signatures of custom types used in methods."
+  - file: "mka-cli/src/utils/mod.rs"
+    method: "validate_yaml"
+    note: "Strictly validates feature YAML files against schema.json."
+validation:
+  test_file: "mka-cli/src/commands/feature.rs"

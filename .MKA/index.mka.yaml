@@ -1,8 +1,17 @@
 # Modular Knowledge Architecture Index
-project: "[Project Name]"
+project: "MKA-CLI Utility"
 version: 1.0
 
 workflows:
-  - id: example-workflow
-    intent: "Describe the high-level goal of this workflow."
-    path: "Workflows/example-workflow.mka.yaml"
+  - id: mka-init
+    intent: "Initialize MKA directory structure via GitHub sparse-checkout."
+    path: "Workflows/mka-init.mka.yaml"
+  - id: mka-features
+    intent: "List all available workflows/features in TOON format."
+    path: "Workflows/mka-features.mka.yaml"
+  - id: mka-feature-details
+    intent: "Extract technical details (signatures, logic) for a feature."
+    path: "Workflows/mka-feature-details.mka.yaml"
+  - id: mka-sync
+    intent: "Auto-heal MKA documentation using AST project scanning."
+    path: "Workflows/mka-sync.mka.yaml"
