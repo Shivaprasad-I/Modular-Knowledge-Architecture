@@ -1,0 +1,17 @@
+id: mka-sync
+intent: "Automatically audit and repair MKA documentation by finding moved or renamed methods using project-wide AST scanning."
+nodes:
+  - file: "mka-cli/src/main.rs"
+    method: "main"
+    note: "Routes to the sync command."
+  - file: "mka-cli/src/commands/sync.rs"
+    method: "handle"
+    note: "Iterates through all workflows and identifies broken nodes."
+  - file: "mka-cli/src/commands/sync.rs"
+    method: "find_method_in_project"
+    note: "Performs a global search for missing methods to 'heal' the documentation."
+  - file: "mka-cli/src/analyzer/mod.rs"
+    method: "get_method_signature"
+    note: "Used during sync to verify if a method exists in a candidate file."
+validation:
+  test_file: "mka-cli/src/commands/sync.rs"

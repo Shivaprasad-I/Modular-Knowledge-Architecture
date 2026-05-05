@@ -1,0 +1,20 @@
+[package]
+name = "mka"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1.0"
+anyhow = "1.0"
+walkdir = "2.4"
+fs_extra = "1.3"
+regex = "1.10"
+tree-sitter = "0.25.0"
+libloading = "0.8"
+jsonschema = "0.17"
+toon = "0.1.2"
+streaming-iterator = "0.1.9"
+# Removed include_dir as we are moving to remote cloning
