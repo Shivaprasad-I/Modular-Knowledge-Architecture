@@ -47,7 +47,7 @@ pub fn get_language_from_path(path: &Path) -> Option<&'static str> {
         "rs" => Some("rust"),
         "ts" | "tsx" | "js" | "jsx" => Some("typescript"),
         "py" => Some("python"),
-        "cs" => Some("csharp"),
+        "cs" => Some("c-sharp"),
         "go" => Some("go"),
         "c" => Some("c"),
         "cpp" | "cc" | "cxx" => Some("cpp"),

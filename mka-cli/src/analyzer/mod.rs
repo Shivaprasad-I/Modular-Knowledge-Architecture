@@ -79,7 +79,12 @@ impl SourceAnalyzer {
             format!("(function_item (identifier) @name (#eq? @name \"{}\"))", method_name),
             format!("(function_declaration (identifier) @name (#eq? @name \"{}\"))", method_name),
             format!("(method_definition (property_identifier) @name (#eq? @name \"{}\"))", method_name),
+            format!("(method_definition (identifier) @name (#eq? @name \"{}\"))", method_name),
             format!("(function_definition (identifier) @name (#eq? @name \"{}\"))", method_name),
+            format!("(method_declaration name: (identifier) @name (#eq? @name \"{}\"))", method_name),
+            format!("(method_declaration (identifier) @name (#eq? @name \"{}\"))", method_name),
+            format!("(constructor_declaration name: (identifier) @name (#eq? @name \"{}\"))", method_name),
+            format!("(constructor_declaration (identifier) @name (#eq? @name \"{}\"))", method_name),
         ];
 
         let mut cursor = QueryCursor::new();
@@ -111,7 +116,12 @@ impl SourceAnalyzer {
             format!("(function_item (identifier) @name (#eq? @name \"{}\"))", method_name),
             format!("(function_declaration (identifier) @name (#eq? @name \"{}\"))", method_name),
             format!("(method_definition (property_identifier) @name (#eq? @name \"{}\"))", method_name),
+            format!("(method_definition (identifier) @name (#eq? @name \"{}\"))", method_name),
             format!("(function_definition (identifier) @name (#eq? @name \"{}\"))", method_name),
+            format!("(method_declaration name: (identifier) @name (#eq? @name \"{}\"))", method_name),
+            format!("(method_declaration (identifier) @name (#eq? @name \"{}\"))", method_name),
+            format!("(constructor_declaration name: (identifier) @name (#eq? @name \"{}\"))", method_name),
+            format!("(constructor_declaration (identifier) @name (#eq? @name \"{}\"))", method_name),
         ];
 
         let mut cursor = QueryCursor::new();
@@ -241,9 +251,20 @@ impl SourceAnalyzer {
         let query_strs = vec![
             format!("(struct_item (identifier) @name (#eq? @name \"{}\"))", model_name),
             format!("(enum_item (identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(interface_declaration name: (identifier) @name (#eq? @name \"{}\"))", model_name),
             format!("(interface_declaration (identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(class_declaration name: (identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(class_declaration name: (type_identifier) @name (#eq? @name \"{}\"))", model_name),
             format!("(class_declaration (identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(class_declaration (type_identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(struct_declaration name: (identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(struct_declaration (identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(enum_declaration name: (identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(enum_declaration (identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(record_declaration name: (identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(record_declaration (identifier) @name (#eq? @name \"{}\"))", model_name),
             format!("(type_alias_declaration (identifier) @name (#eq? @name \"{}\"))", model_name),
+            format!("(type_alias_declaration (type_identifier) @name (#eq? @name \"{}\"))", model_name),
         ];
 
         let mut parser = Parser::new();
