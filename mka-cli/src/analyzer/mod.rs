@@ -3,6 +3,7 @@ use libloading::{Library, Symbol};
 use std::path::Path;
 use anyhow::{Result, Context, anyhow};
 use regex::Regex;
+use streaming_iterator::StreamingIterator;
 
 pub struct DynamicLanguageLoader {
     libs: Vec<Library>,
@@ -14,13 +15,26 @@ impl DynamicLanguageLoader {
     }
 
     pub fn load_language(&mut self, lang_name: &str) -> Result<tree_sitter::Language> {
-        let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-        let possible_paths = vec![
-            format!("{}/.local/share/nvim/lazy/nvim-treesitter/parser/{}.so", home, lang_name), // Neovim (lazy.nvim)
-            format!("{}/.cache/tree-sitter/lib/{}.so", home, lang_name),
-            format!("/usr/local/lib/tree-sitter-{}.so", lang_name),
-            format!("./parsers/{}.so", lang_name),
+        let ext = std::env::consts::DLL_EXTENSION;
+        let home = std::env::var("HOME")
+            .or_else(|_| std::env::var("USERPROFILE"))
+            .unwrap_or_else(|_| ".".to_string());
+        
+        let mut possible_paths = vec![
+            format!("{}/.local/share/nvim/lazy/nvim-treesitter/parser/{}.{}", home, lang_name, ext), // Neovim (lazy.nvim)
+            format!("{}/.local/share/nvim/site/pack/packer/start/nvim-treesitter/parser/{}.{}", home, lang_name, ext), // Neovim (packer.nvim)
+            format!("{}/.cache/tree-sitter/lib/{}.{}", home, lang_name, ext),
+            format!("./parsers/{}.{}", lang_name, ext),
         ];
+
+        // Windows-specific Neovim paths
+        if cfg!(windows) {
+            if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
+                possible_paths.push(format!("{}/nvim-data/lazy/nvim-treesitter/parser/{}.{}", local_app_data, lang_name, ext));
+            }
+        } else {
+            possible_paths.push(format!("/usr/local/lib/tree-sitter-{}.{}", lang_name, ext));
+        }
 
         for path in possible_paths {
             if Path::new(&path).exists() {
@@ -38,7 +52,7 @@ impl DynamicLanguageLoader {
         }
 
         Err(anyhow!(
-            "Tree-sitter parser for '{}' not found. Please install it to a standard location (e.g., ~/.cache/tree-sitter/lib/{}.so)",
+            "Tree-sitter parser for '{}' not found. Please run 'mka install {}' or install it to a standard location.",
             lang_name, lang_name
         ))
     }
@@ -46,17 +60,18 @@ impl DynamicLanguageLoader {
 
 pub struct SourceAnalyzer {
     language: tree_sitter::Language,
+    lang_name: String,
     source_code: String,
 }
 
 impl SourceAnalyzer {
-    pub fn new(language: tree_sitter::Language, source_code: String) -> Self {
-        Self { language, source_code }
+    pub fn new(language: tree_sitter::Language, lang_name: String, source_code: String) -> Self {
+        Self { language, lang_name, source_code }
     }
 
     pub fn get_method_signature(&self, method_name: &str) -> Result<String> {
         let mut parser = Parser::new();
-        parser.set_language(self.language)?;
+        parser.set_language(&self.language)?;
         let tree = parser.parse(&self.source_code, None)
             .context("Failed to parse source code")?;
 
@@ -69,9 +84,9 @@ impl SourceAnalyzer {
 
         let mut cursor = QueryCursor::new();
         for q_str in &query_strs {
-            if let Ok(query) = Query::new(self.language, q_str) {
-                let matches = cursor.matches(&query, tree.root_node(), self.source_code.as_bytes());
-                for m in matches {
+            if let Ok(query) = Query::new(&self.language, q_str) {
+                let mut matches = cursor.matches(&query, tree.root_node(), self.source_code.as_bytes());
+                while let Some(m) = matches.next() {
                     for capture in m.captures {
                         let node = capture.node.parent().unwrap_or(capture.node);
                         let sig = node.utf8_text(self.source_code.as_bytes())?;
@@ -88,7 +103,7 @@ impl SourceAnalyzer {
 
     pub fn get_minified_logic(&self, method_name: &str) -> Result<String> {
         let mut parser = Parser::new();
-        parser.set_language(self.language)?;
+        parser.set_language(&self.language)?;
         let tree = parser.parse(&self.source_code, None)
             .context("Failed to parse source code")?;
 
@@ -101,9 +116,9 @@ impl SourceAnalyzer {
 
         let mut cursor = QueryCursor::new();
         for q_str in &query_strs {
-            if let Ok(query) = Query::new(self.language, q_str) {
-                let matches = cursor.matches(&query, tree.root_node(), self.source_code.as_bytes());
-                for m in matches {
+            if let Ok(query) = Query::new(&self.language, q_str) {
+                let mut matches = cursor.matches(&query, tree.root_node(), self.source_code.as_bytes());
+                while let Some(m) = matches.next() {
                     if let Some(capture) = m.captures.iter().next() {
                         let node = capture.node.parent().unwrap_or(capture.node);
                         return self.minify_node(node);
@@ -126,26 +141,35 @@ impl SourceAnalyzer {
         let collapsed = re_empty_lines.replace_all(&result, "\n").to_string();
         
         let lines: Vec<&str> = collapsed.lines().collect();
-        let min_indent = lines.iter()
-            .find(|line| !line.trim().is_empty())
-            .map(|line| line.chars().take_while(|c| c.is_whitespace()).count())
-            .unwrap_or(0);
-            
-        let unindented = lines.iter()
-            .map(|line| {
-                if line.trim().is_empty() {
-                    ""
-                } else if line.chars().take_while(|c| c.is_whitespace()).count() >= min_indent {
-                    let (idx, _) = line.char_indices().nth(min_indent).unwrap_or((line.len(), ' '));
-                    &line[idx..]
-                } else {
-                    line
-                }
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
 
-        Ok(unindented.trim().to_string())
+        if self.lang_name == "python" {
+            let min_indent = lines.iter()
+                .find(|line| !line.trim().is_empty())
+                .map(|line| line.chars().take_while(|c| c.is_whitespace()).count())
+                .unwrap_or(0);
+                
+            let unindented = lines.iter()
+                .map(|line| {
+                    if line.trim().is_empty() {
+                        ""
+                    } else if line.chars().take_while(|c| c.is_whitespace()).count() >= min_indent {
+                        let (idx, _) = line.char_indices().nth(min_indent).unwrap_or((line.len(), ' '));
+                        &line[idx..]
+                    } else {
+                        line
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+            Ok(unindented.trim().to_string())
+        } else {
+            // Trim ALL leading spaces for non-indentation sensitive languages
+            let untabbed = lines.iter()
+                .map(|line| line.trim_start())
+                .collect::<Vec<_>>()
+                .join("\n");
+            Ok(untabbed.trim().to_string())
+        }
     }
 
     fn traverse_and_minify(
@@ -223,14 +247,14 @@ impl SourceAnalyzer {
         ];
 
         let mut parser = Parser::new();
-        parser.set_language(self.language)?;
+        parser.set_language(&self.language)?;
         let tree = parser.parse(&self.source_code, None).context("Failed to parse")?;
         let mut cursor = QueryCursor::new();
 
         for q_str in &query_strs {
-            if let Ok(query) = Query::new(self.language, q_str) {
-                let matches = cursor.matches(&query, tree.root_node(), self.source_code.as_bytes());
-                for m in matches {
+            if let Ok(query) = Query::new(&self.language, q_str) {
+                let mut matches = cursor.matches(&query, tree.root_node(), self.source_code.as_bytes());
+                while let Some(m) = matches.next() {
                     for capture in m.captures {
                         let node = capture.node.parent().unwrap_or(capture.node);
                         let text = node.utf8_text(self.source_code.as_bytes())?;

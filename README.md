@@ -61,8 +61,9 @@ This will clone the `.MKA` structure via sparse-checkout directly from this repo
 
 ### 3. Usage for AI
 Provide `AI.md` as the primary context for the AI. The AI will then use the `mka` command to:
-- **`mka features`**: List available technical mini-maps.
+- **`mka features-list`**: List available technical mini-maps.
 - **`mka feature <id> [--view]`**: Explore specific features with token-efficient logic views.
+- **`mka get-method <path> <method>`**: Extract minified logic for a specific method from any file.
 - **`mka sync`**: Automatically repair documentation that has fallen out of sync.
 
 ---

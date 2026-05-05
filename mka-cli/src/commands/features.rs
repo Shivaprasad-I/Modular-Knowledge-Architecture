@@ -12,7 +12,7 @@ pub fn handle() -> Result<()> {
     let content = fs::read_to_string(index_path)?;
     let index: MkaIndex = serde_yaml::from_str(&content)?;
 
-    println!("@mka:features");
+    println!("@mka:features-list");
     for workflow in index.workflows {
         println!("- [{}]: {}", workflow.id, workflow.intent);
     }

@@ -12,7 +12,7 @@ nodes:
     note: "Uses Tree-sitter AST to extract precise method signatures."
   - file: "mka-cli/src/analyzer/mod.rs"
     method: "get_minified_logic"
-    note: "Strips comments and boilerplate to provide token-efficient logic view."
+    note: "Strips comments/boilerplate and applies language-specific indentation (strips for brace-langs, preserves for Python). Results in Markdown output."
   - file: "mka-cli/src/analyzer/mod.rs"
     method: "detect_models"
     note: "Automatically identifies and extracts signatures of custom types used in methods."

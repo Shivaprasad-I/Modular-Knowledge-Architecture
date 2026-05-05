@@ -20,10 +20,14 @@ fn main() -> Result<()> {
 
     match &cli.command {
         Commands::Init => commands::init::handle()?,
-        Commands::Features | Commands::Workflows => commands::features::handle()?,
+        Commands::FeaturesList | Commands::Workflows => commands::features::handle()?,
         Commands::Feature { id, view } => commands::feature::handle(id, *view)?,
+
         Commands::Sync => commands::sync::handle()?,
+        Commands::Install { language } => commands::install::handle(language)?,
+        Commands::GetMethod { path, method } => commands::get_method::handle(path, method)?,
     }
+
 
     Ok(())
 }

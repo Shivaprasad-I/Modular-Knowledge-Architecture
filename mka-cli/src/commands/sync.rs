@@ -36,7 +36,7 @@ pub fn handle() -> Result<()> {
 
                 if lang_name != "unknown" {
                     if let Ok(lang) = loader.load_language(lang_name) {
-                        let analyzer = SourceAnalyzer::new(lang, source);
+                        let analyzer = SourceAnalyzer::new(lang, lang_name.to_string(), source);
                         analyzer.get_method_signature(method_name).is_ok()
                     } else {
                         false
@@ -84,7 +84,7 @@ fn find_method_in_project(method_name: &str, loader: &mut DynamicLanguageLoader)
 
             if let Ok(lang) = loader.load_language(lang_name) {
                 if let Ok(source) = fs::read_to_string(path) {
-                    let analyzer = SourceAnalyzer::new(lang, source);
+                    let analyzer = SourceAnalyzer::new(lang, lang_name.to_string(), source);
                     if analyzer.get_method_signature(method_name).is_ok() {
                         return Ok(Some(path.to_string_lossy().into_owned()));
                     }
