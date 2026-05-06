@@ -1,34 +1,39 @@
-use clap::Subcommand;
+use clap::{Subcommand};
 
 #[derive(Subcommand)]
 pub enum Commands {
     /// Initialize MKA in the current directory
     Init,
-    /// List all features/workflows
-    FeaturesList,
-    /// Alias for features
+    /// List all available actions
+    Actions,
+    /// Alias for actions
     Workflows,
-
-    /// Get details of a specific feature
-    Feature {
-        /// The ID of the feature/workflow
+    /// Get details of a specific trigger map
+    TriggerMap {
+        /// The ID of the action/trigger-map
         id: String,
-        /// Show detailed minified logic
-        #[arg(short, long)]
-        view: bool,
+        /// Suppress minified snippets and return TOON JSON
+        #[arg(long)]
+        no_snippets: bool,
     },
-    /// Sync MKA documentation with the codebase
+    /// Alias for trigger-map
+    Feature {
+        id: String,
+        #[arg(long)]
+        no_view: bool,
+    },
+    /// Sync the MKA index and heal broken paths
     Sync,
-    /// Install a tree-sitter parser for a specific language
+    /// Install a tree-sitter parser
     Install {
-        /// The language to install (e.g., rust, python, typescript)
+        /// Language to install (e.g., rust, python)
         language: String,
     },
-    /// Get the minified logic of a specific method from a file
+    /// Surgically extract a method signature and logic
     GetMethod {
-        /// The relative path to the file
+        /// Path to the source file
         path: String,
-        /// The name of the method to extract
+        /// Name of the method
         method: String,
     },
 }

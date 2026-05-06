@@ -1,72 +1,61 @@
-# Modular Knowledge Architecture (MKA) - Local Registry
+# Modular Knowledge Architecture (MKA)
 
-## The Mission: Precision over Volume
-Modern Large Language Models (LLMs) are capable of processing entire codebases, but **capability is not efficiency.** MKA is a surgical indexing protocol designed to bridge the gap between "reading everything" and "understanding what matters."
+**The Surgical Logic Protocol for AI-First Engineering.**
 
-## Why MKA is Necessary
-Even with massive context windows, AI-driven development faces critical challenges that MKA solves:
-
-### 1. The "Lost in the Middle" Effect
-When an AI is fed an entire project, the most important technical nuances often get lost in the noise. MKA provides a **High-Density Mini-Map** that forces the AI's attention onto the exact artifacts that define a feature's behavior.
-
-### 2. Context-Aware Dynamic Scaling (Anti-Bloat)
-One of the greatest wastes of tokens is "Instruction Overload"—forcing an AI to read naming conventions and build rules for tasks that don't require them. MKA implements **Just-in-Time Instructions** via **Procedures**. The AI is aware of "Trigger Points" and only pulls detailed project procedures into its active memory when the task explicitly requires them.
-
-### 3. Documentation Decay (The Multi-Developer Problem)
-Traditional documentation dies the moment "Developer B" modifies a feature written by "Developer A." MKA solves this by **decoupling the "What" from the "How."** 
-- We document the **"Where"** (the files and methods).
-- We leave the **"Logic"** (the conditions and branches) in the code.
-- This ensures the AI always sees the current implementation truth, even if the internals change under the hood.
-
-### 4. Eliminating Logical Redundancy
-LLMs are native speakers of both English and Code. MKA removes "Translation Layer" bloat. We provide the entry points (the Nodes), and we let the AI's natural reasoning engine interpret the source code directly.
-
-### 5. On-Demand Maintenance (Developer Mode vs. Librarian Mode)
-To prevent annoying overhead, MKA does not require documentation updates during active development. The AI focuses 100% on code until you explicitly command it to **"Update Documentation."** Only then does the AI switch to "Librarian Mode" to synchronize the MKA registry.
+MKA is a protocol and CLI utility designed to solve the "Context Noise" problem in Large Language Model (LLM) software engineering. It decouples the **Intent** (what a feature does) from the **Implementation** (how it's built) by providing a high-density "Mini-Map" of codebases.
 
 ---
 
-## 🏗️ Project Procedures & Standards
-Project-specific "House Rules" (building, publishing, naming conventions) are handled through a **Trigger-Based Reference System**.
+## 🚀 The Core Philosophy
 
-### Why separate Procedures?
-Instead of a single giant "Rules" file that the AI must read every turn, we split instructions into modular files. This keeps the AI's "working memory" clean for the actual code.
+### 1. Context Efficiency (TOON)
+When an AI is fed an entire project, the most important technical nuances often get lost in the noise. MKA provides a **High-Density Mini-Map** that forces the AI's attention onto the exact artifacts that define an **Action's** behavior. We use **TOON (Token Oriented Object Notation)** to maximize the signal-to-token ratio.
 
-### When to use them?
-- **Strict Rules:** Global, non-negotiable mandates are stored directly in `AI.md` under **Core Mandates**.
-- **Case-Specific Procedures:** Instructions for specific tasks (e.g., "How to publish") are stored in the `Procedures/` directory.
+### 2. Decoupled Documentation
+Traditional documentation dies the moment "Developer B" modifies code written by "Developer A." MKA solves this by **decoupling the "What" from the "How."** Instead of writing long READMEs, you define **Trigger Maps**—structured lists of files and methods involved in a specific data flow.
 
-### How it works:
-1. The AI starts the session by reading `AI.md`.
-2. `AI.md` contains **Triggers** (e.g., "When adding a database file").
-3. The AI only reads the corresponding procedure file in `Procedures/` if its current task matches that trigger.
+### 3. Surgical Analysis
+LLMs are native speakers of both English and Code. MKA removes "Translation Layer" bloat. We provide the entry points (the **Trigger Nodes**), and we let the AI's natural reasoning engine interpret the source code directly using extracted **Snippets**.
 
 ---
 
-## 🚀 How to Bootstrap
-The fastest way to use MKA is through our dedicated Rust utility: **`mka-cli`**.
+## 🛠️ Key Terminology
 
-### 1. Build the Utility
+*   **Action**: A high-level functional goal of the project (e.g., "User Login", "Sync Data").
+*   **Trigger Map**: The technical "map" or sequence of surface-level methods (triggers) that data flows through to complete an Action.
+*   **Trigger Node**: A specific file and method within a Trigger Map.
+*   **Snippet**: A surgically extracted, minified version of a method's logic, optimized for AI context windows.
+
+---
+
+## 💻 CLI Usage
+
+### Installation
 ```bash
+# Clone the repo and build
 cd mka-cli
 cargo build --release
+cp target/release/mka /usr/local/bin/
 ```
 
-### 2. Initialize a Project
-In your project root, run:
-```bash
-/path/to/mka init
-```
-This will clone the `.MKA` structure via sparse-checkout directly from this repository.
-
-### 3. Usage for AI
-Provide `AI.md` as the primary context for the AI. The AI will then use the `mka` command to:
-- **`mka features-list`**: List available technical mini-maps.
-- **`mka feature <id> [--view]`**: Explore specific features with token-efficient logic views.
-- **`mka get-method <path> <method>`**: Extract minified logic for a specific method from any file.
-- **`mka sync`**: Automatically repair documentation that has fallen out of sync.
+### Navigation
+- **`mka actions`**: List all high-level actions and their trigger-maps.
+- **`mka trigger-map <id>`**: Display the technical map (nodes) for a specific action.
+- **`mka trigger-map <id> --snippets`**: Explore specific actions with token-efficient logic snippets.
+- **`mka sync`**: Automatically heal broken paths in your trigger maps if files are moved.
+- **`mka install <lang>`**: Install Tree-sitter parsers to the centralized MKA folder.
 
 ---
 
-## 🏗️ Project Procedures & Standards
-*MKA is an experimental project indexing system. It assumes that the code is the truth, and the documentation is the map.*
+## 📁 The .MKA Directory Structure
+
+MKA stores its knowledge in a `.MKA` folder at the project root:
+- `index.mka.yaml`: The master index of all **Actions**.
+- `TriggerMaps/`: Contains `.mka.yaml` files defining the specific method flows.
+- `Procedures/`: Narrative Markdown files for complex team workflows (e.g., publishing, maintenance).
+- `schema.json`: The JSON schema that ensures all **Trigger Maps** are technically valid.
+
+---
+
+## 📄 License
+MIT

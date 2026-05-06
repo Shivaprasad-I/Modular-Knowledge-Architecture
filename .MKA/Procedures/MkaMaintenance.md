@@ -1,27 +1,25 @@
-# Modular Knowledge Architecture (MKA) Maintenance
+# Procedure: Maintaining MKA Knowledge
 
-As an AI assistant, you are responsible for maintaining the **MKA Technical Index**. 
+MKA knowledge is **surgical**. It must be kept lean and technically accurate to ensure AI efficiency.
 
-## 1. Defining a Workflow
-Do not index every file or class. MKA is strictly for **Functional Workflows**. A workflow is defined as:
-- A sequence of events that fulfills a specific goal (e.g., "User Login", "Video Playback").
-- A path that typically spans multiple files or layers (e.g., UI -> Service -> Database).
-- **Prohibited:** Do not create MKA files for utility classes, standalone constants, or isolated helper functions.
+## 1. Defining a Trigger Map
+Do not index every file or class. MKA is strictly for **Functional Trigger Maps**. A trigger map is defined as:
+- A sequence of surface-level methods that data travels through to complete an **Action**.
+- A collection of "Entry Points" that an AI needs to understand to modify a specific logic flow.
 
-## 2. Documentation Lifecycle
-- **New Workflows:** When a new end-to-end feature is added, create a `.mka.yaml` file.
-- **Maintenance:** Update existing workflows only when the functional path changes.
+## 2. Maintenance Lifecycle
+- **New Actions:** When a new high-level capability is added, create a `.mka.yaml` file in `TriggerMaps/`.
+- **Maintenance:** Update existing trigger maps only when the functional path changes (e.g., a method is renamed or the data flow is rerouted).
+- **Automation:** Run `mka sync` regularly to detect and heal broken file paths in your trigger maps.
 
-## 3. The "Planar List" Protocol
-- **Nodes Only:** List the files and methods involved. Do not write narrative logic.
-- **Validation:** Provide a pointer to the `test_file` that verifies the feature.
+## 3. Best Practices
+- **Atomic Intents:** Each trigger map should have one clear `intent` string.
+- **Trigger Nodes Only:** List the files and methods involved. Do not write narrative logic in the YAML—MKA will extract **Snippets** automatically.
+- **Cross-Referencing:** If a node triggers another complete Trigger Map, use the `trigger_map: <id>` field instead of `file: <path>`. This allows the AI to traverse modular logic graphs without duplicating `.mka.yaml` file paths.
+- **Validation:** Provide a pointer to the `test_file` that verifies the action.
 
-## 4. Fallback Responsibility
-MKA does not replace your standard engineering tools. 
-- If the MKA index is missing information, you MUST use `grep_search`, `glob`, or other discovery tools to find the truth in the code.
-- Once you discover a missing path via traditional search, you are expected to **add it to the MKA index** to help future sessions.
-
-## 5. MKA File Structure
-- **Extension:** `.mka.yaml`
-- **Pathing:** All paths MUST be relative to the project root.
-- **Schema:** Adhere strictly to `.MKA/schema.json`.
+## 4. Finalizing Changes
+Before committing changes to the `.MKA` directory:
+1.  Verify the YAML against `schema.json`.
+2.  Run `mka actions` to ensure the new action appears in the index.
+3.  Run `mka trigger-map <id> --snippets` to confirm the logic extraction is working as expected.

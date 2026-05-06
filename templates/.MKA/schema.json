@@ -1,28 +1,28 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "MKA Workflow Specification",
+  "title": "MKA Trigger Map Specification",
   "type": "object",
-  "required": ["id", "intent", "nodes"],
+  "required": ["id", "intent", "trigger_nodes"],
   "properties": {
-    "id": { "type": "string" },
-    "intent": { "type": "string" },
-    "nodes": {
+    "id": { "type": "string", "description": "Unique identifier for this action/trigger-map." },
+    "intent": { "type": "string", "description": "Human-readable goal of this trigger map." },
+    "trigger_nodes": {
       "type": "array",
-      "description": "A flat collection of files and methods involved in this workflow.",
+      "description": "A flat collection of files and methods involved in this trigger map.",
       "items": {
         "type": "object",
-        "required": ["file"],
         "properties": {
-          "file": { "type": "string" },
-          "method": { "type": "string", "description": "Optional: Specific entry point or affected method." },
-          "note": { "type": "string", "description": "Crucial context." }
+          "file": { "type": "string", "description": "Relative path to the source file." },
+          "trigger_map": { "type": "string", "description": "ID of another trigger map to reference." },
+          "method": { "type": "string", "description": "Optional: Specific method name to target." },
+          "note": { "type": "string", "description": "Optional: Brief technical note about this node's role." }
         }
       }
     },
     "validation": {
       "type": "object",
       "properties": {
-        "test_file": { "type": "string", "description": "Path to the primary test suite for this workflow." }
+        "test_file": { "type": "string", "description": "Path to the primary test suite for this trigger map." }
       }
     }
   }

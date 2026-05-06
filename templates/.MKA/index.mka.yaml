@@ -1,8 +1,6 @@
-# Modular Knowledge Architecture Index
-project: "[Project Name]"
+project: "Modular-Knowledge-Architecture"
 version: 1.0
-
-workflows:
-  - id: example-workflow
-    intent: "Describe the high-level goal of this workflow."
-    path: "Workflows/example-workflow.mka.yaml"
+trigger_maps:
+  - id: example-action
+    intent: "Describe the high-level goal of this action."
+    path: "TriggerMaps/example-trigger-map.mka.yaml"

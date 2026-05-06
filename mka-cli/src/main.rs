@@ -20,8 +20,9 @@ fn main() -> Result<()> {
 
     match &cli.command {
         Commands::Init => commands::init::handle()?,
-        Commands::FeaturesList | Commands::Workflows => commands::features::handle()?,
-        Commands::Feature { id, view } => commands::feature::handle(id, *view)?,
+        Commands::Actions | Commands::Workflows => commands::actions::handle()?,
+        Commands::TriggerMap { id, no_snippets } => commands::trigger_map::handle(id, !*no_snippets)?,
+        Commands::Feature { id, no_view } => commands::trigger_map::handle(id, !*no_view)?,
 
         Commands::Sync => commands::sync::handle()?,
         Commands::Install { language } => commands::install::handle(language)?,

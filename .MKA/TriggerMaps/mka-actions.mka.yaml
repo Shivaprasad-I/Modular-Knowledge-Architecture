@@ -1,0 +1,11 @@
+id: mka-actions
+intent: "List all available actions/trigger-maps from the MKA index."
+trigger_nodes:
+  - file: "mka-cli/src/main.rs"
+    method: "main"
+    note: "Routes to the actions command."
+  - file: "mka-cli/src/commands/actions.rs"
+    method: "handle"
+    note: "Reads and displays the MKA index in TOON format."
+validation:
+  test_file: "mka-cli/src/commands/actions.rs"

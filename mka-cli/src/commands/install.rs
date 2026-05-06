@@ -1,21 +1,10 @@
 use std::process::Command;
-use std::path::{PathBuf};
 use anyhow::{Result, anyhow, Context};
 use std::fs;
+use crate::models::configs::Config;
 
 pub fn handle(language: &str) -> Result<()> {
-    let home = std::env::var("HOME")
-        .or_else(|_| std::env::var("USERPROFILE"))
-        .unwrap_or_else(|_| ".".to_string());
-    
-    let target_dir = if cfg!(windows) {
-        match std::env::var("LOCALAPPDATA") {
-            Ok(local_app_data) => PathBuf::from(local_app_data).join("tree-sitter").join("lib"),
-            Err(_) => PathBuf::from(home).join(".cache").join("tree-sitter").join("lib"),
-        }
-    } else {
-        PathBuf::from(home).join(".cache").join("tree-sitter").join("lib")
-    };
+    let target_dir = Config::get_treesitter_dir();
 
     if !target_dir.exists() {
         fs::create_dir_all(&target_dir)?;

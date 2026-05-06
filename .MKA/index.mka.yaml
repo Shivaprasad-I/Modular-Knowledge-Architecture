@@ -1,17 +1,15 @@
-# Modular Knowledge Architecture Index
-project: "MKA-CLI Utility"
+project: Modular-Knowledge-Architecture
 version: 1.0
-
-workflows:
-  - id: mka-init
-    intent: "Initialize MKA directory structure via GitHub sparse-checkout."
-    path: "Workflows/mka-init.mka.yaml"
-  - id: mka-features
-    intent: "List all available workflows/features in TOON format."
-    path: "Workflows/mka-features.mka.yaml"
-  - id: mka-feature-details
-    intent: "Extract technical details (signatures, logic) for a feature."
-    path: "Workflows/mka-feature-details.mka.yaml"
-  - id: mka-sync
-    intent: "Auto-heal MKA documentation using AST project scanning."
-    path: "Workflows/mka-sync.mka.yaml"
+trigger_maps:
+- id: mka-init
+  intent: Initialize MKA by sparse-cloning the template structure from GitHub.
+  path: TriggerMaps/mka-init.mka.yaml
+- id: mka-actions
+  intent: List all available actions/trigger-maps in TOON format.
+  path: TriggerMaps/mka-actions.mka.yaml
+- id: mka-trigger-map-details
+  intent: Extract technical details (signatures, logic) for a trigger-map.
+  path: TriggerMaps/mka-trigger-map-details.mka.yaml
+- id: mka-sync
+  intent: Sync the MKA index and heal broken paths automatically.
+  path: TriggerMaps/mka-sync.mka.yaml

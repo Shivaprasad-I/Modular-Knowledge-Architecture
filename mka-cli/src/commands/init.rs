@@ -3,19 +3,18 @@ use std::fs;
 use std::process::Command;
 use anyhow::{Result, Context, anyhow};
 use crate::utils::copy_dir_recursive;
-
-const REPO_URL: &str = "https://github.com/Shivaprasad-I/Modular-Knowledge-Architecture.git";
+use crate::models::configs::Config;
 
 pub fn handle() -> Result<()> {
-    let mka_dir = Path::new(".MKA");
+    let mka_dir = Path::new(Config::DIR_NAME);
     if mka_dir.exists() {
         println!("MKA already initialized.");
         return Ok(());
     }
 
-    println!("Initializing MKA from {}...", REPO_URL);
+    println!("Initializing MKA from {}...", Config::REPO_URL);
 
-    let temp_dir = Path::new(".mka_temp");
+    let temp_dir = Path::new(Config::TEMP_DIR);
     if temp_dir.exists() {
         fs::remove_dir_all(temp_dir)?;
     }
@@ -34,23 +33,23 @@ pub fn handle() -> Result<()> {
     };
 
     run(&["init"])?;
-    run(&["remote", "add", "origin", REPO_URL])?;
-    run(&["sparse-checkout", "set", ".MKA"])?;
+    run(&["remote", "add", "origin", Config::REPO_URL])?;
+    run(&["sparse-checkout", "set", Config::TEMPLATE_DIR])?;
     
     if let Err(_) = run(&["pull", "--depth", "1", "origin", "main"]) {
         run(&["pull", "--depth", "1", "origin", "master"])
             .context("Failed to pull from both 'main' and 'master' branches.")?;
     }
 
-    let source_mka = temp_dir.join(".MKA");
-    if source_mka.exists() {
-        copy_dir_recursive(&source_mka, mka_dir)?;
+    let source_templates = temp_dir.join(Config::TEMPLATE_DIR);
+    if source_templates.exists() {
+        copy_dir_recursive(&source_templates, Path::new("."))?;
     } else {
-        return Err(anyhow!("The repository does not contain a .MKA directory."));
+        return Err(anyhow!("The repository does not contain a '{}' directory.", Config::TEMPLATE_DIR));
     }
 
     fs::remove_dir_all(temp_dir)?;
 
-    println!("Initialized .MKA directory structure via sparse-checkout.");
+    println!("Initialized MKA project structure from templates.");
     Ok(())
 }

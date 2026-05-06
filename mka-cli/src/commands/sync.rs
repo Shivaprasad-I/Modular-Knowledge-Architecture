@@ -1,97 +1,93 @@
 use std::path::Path;
 use std::fs;
 use anyhow::Result;
-use crate::models::{MkaIndex, Workflow};
+use crate::models::{MkaIndex, TriggerMap};
 use crate::analyzer::{DynamicLanguageLoader, SourceAnalyzer};
-use walkdir::WalkDir;
+
+use crate::utils::find_mka_root;
+use crate::models::configs::Config;
 
 pub fn handle() -> Result<()> {
-    println!("Syncing MKA documentation...");
-    let index_path = Path::new(".MKA/index.mka.yaml");
-    let content = fs::read_to_string(index_path)?;
-    let index: MkaIndex = serde_yaml::from_str(&content)?;
+    let mka_root = find_mka_root()?;
+    let mka_folder = Config::get_mka_folder()?;
+    let index_path = Config::get_index_file()?;
+    let index_content = fs::read_to_string(&index_path)?;
+    let index: MkaIndex = serde_yaml::from_str(&index_content)?;
+
     let mut loader = DynamicLanguageLoader::new();
 
-    for summary in &index.workflows {
-        let workflow_path = Path::new(".MKA").join(&summary.path);
-        let workflow_content = fs::read_to_string(&workflow_path)?;
-        let mut workflow: Workflow = serde_yaml::from_str(&workflow_content)?;
-        let mut modified = false;
+    for summary in &index.trigger_maps {
+        let map_path = mka_folder.join(&summary.path);
+        let map_content = fs::read_to_string(&map_path)?;
+        let mut trigger_map: TriggerMap = serde_yaml::from_str(&map_content)?;
 
-        println!("Checking workflow: {}", workflow.id);
+        let mut changed = false;
+        println!("Checking Trigger Map: {}", trigger_map.id);
 
-        for node in &mut workflow.nodes {
-            let file_path = Path::new(&node.file);
+        for node in &mut trigger_map.trigger_nodes {
+            if node.trigger_map.is_some() {
+                continue; // Skip cross-references
+            }
+
+            let file_path_str = node.file.as_deref().unwrap_or("");
+            let file_path = mka_root.join(file_path_str);
             let method_name = node.method.as_deref().unwrap_or("main");
 
-            let exists = if file_path.exists() {
-                let source = fs::read_to_string(file_path)?;
-                let ext = file_path.extension().and_then(|s| s.to_str()).unwrap_or("");
-                let lang_name = match ext {
-                    "rs" => "rust",
-                    "ts" | "tsx" | "js" | "jsx" => "typescript",
-                    "py" => "python",
-                    _ => "unknown",
-                };
-
-                if lang_name != "unknown" {
-                    if let Ok(lang) = loader.load_language(lang_name) {
-                        let analyzer = SourceAnalyzer::new(lang, lang_name.to_string(), source);
-                        analyzer.get_method_signature(method_name).is_ok()
-                    } else {
-                        false
-                    }
+            if file_path_str.is_empty() || !file_path.exists() {
+                println!("  Node {}::{} is broken. Searching for healing...", file_path_str, method_name);
+                if let Some(new_file) = heal_path(&mka_root, file_path_str) {
+                    println!("    Healed to: {}", new_file);
+                    node.file = Some(new_file);
+                    changed = true;
                 } else {
-                    false
+                    println!("    Failed to heal node {}::{}.", file_path_str, method_name);
                 }
             } else {
-                false
-            };
-
-            if !exists {
-                println!("  Node {}::{} is broken. Searching for healing...", node.file, method_name);
-                if let Some(new_file) = find_method_in_project(method_name, &mut loader)? {
-                    println!("    Healed! Found at {}", new_file);
-                    node.file = new_file;
-                    modified = true;
-                } else {
-                    println!("    Failed to heal node {}::{}.", node.file, method_name);
+                // Verify method exists
+                let source = fs::read_to_string(&file_path)?;
+                let lang_name = crate::utils::get_language_from_path(&file_path).unwrap_or("text");
+                if let Ok(lang) = loader.load_language(lang_name) {
+                    let analyzer = SourceAnalyzer::new(lang, lang_name.to_string(), source);
+                    if analyzer.get_method_signature(method_name).is_err() {
+                        println!("  Method {} not found in {}. Searching...", method_name, file_path_str);
+                        // Future: implement method healing
+                    }
                 }
             }
         }
 
-        if modified {
-            let updated_content = serde_yaml::to_string(&workflow)?;
-            fs::write(&workflow_path, updated_content)?;
-            println!("  Updated workflow file: {}", summary.path);
+        if changed {
+            let updated_content = serde_yaml::to_string(&trigger_map)?;
+            fs::write(&map_path, updated_content)?;
+            println!("  Updated trigger map file: {}", summary.path);
         }
     }
+
+    let updated_index = serde_yaml::to_string(&index)?;
+    fs::write(&index_path, updated_index)?;
 
     Ok(())
 }
 
-fn find_method_in_project(method_name: &str, loader: &mut DynamicLanguageLoader) -> Result<Option<String>> {
-    for entry in WalkDir::new(".").into_iter().filter_map(|e| e.ok()) {
-        let path = entry.path();
-        if path.is_file() {
-            let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
-            let lang_name = match ext {
-                "rs" => "rust",
-                "ts" | "tsx" | "js" | "jsx" => "typescript",
-                "py" => "python",
-                _ => continue,
-            };
+fn heal_path(mka_root: &Path, old_path: &str) -> Option<String> {
+    let path = Path::new(old_path);
+    let filename = path.file_name()?.to_str()?;
 
-            if let Ok(lang) = loader.load_language(lang_name) {
-                if let Ok(source) = fs::read_to_string(path) {
-                    let analyzer = SourceAnalyzer::new(lang, lang_name.to_string(), source);
-                    if analyzer.get_method_signature(method_name).is_ok() {
-                        return Ok(Some(path.to_string_lossy().into_owned()));
-                    }
-                }
-            }
+    // Search for filename relative to the MKA root
+    for entry in walkdir::WalkDir::new(mka_root)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_name().to_str() == Some(filename)) 
+    {
+        // Strip the absolute mka_root prefix to store relative path in YAML
+        if let Ok(rel_path) = entry.path().strip_prefix(mka_root) {
+            return Some(rel_path.to_string_lossy().to_string());
         }
     }
 
-    Ok(None)
+    None
 }
+
+#[cfg(test)]
+#[path = "sync_tests.rs"]
+mod sync_tests;

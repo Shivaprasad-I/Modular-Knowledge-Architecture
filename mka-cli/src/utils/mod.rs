@@ -1,8 +1,23 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::fs;
 use anyhow::{Result, Context, anyhow};
 use serde_json::Value;
 use jsonschema::JSONSchema;
+use crate::models::configs::Config;
+
+pub fn find_mka_root() -> Result<PathBuf> {
+    let mut current_dir = std::env::current_dir()?;
+    
+    loop {
+        if current_dir.join(Config::DIR_NAME).exists() {
+            return Ok(current_dir);
+        }
+        
+        if !current_dir.pop() {
+            return Err(anyhow!("fatal: not an MKA repository (or any of the parent directories): {}", Config::DIR_NAME));
+        }
+    }
+}
 
 pub fn validate_yaml(content: &str, schema_path: &Path) -> Result<Value> {
     let yaml_value: Value = serde_yaml::from_str(content)
@@ -57,4 +72,7 @@ pub fn get_language_from_path(path: &Path) -> Option<&'static str> {
         _ => None,
     }
 }
+
+#[cfg(test)]
+mod tests;
 

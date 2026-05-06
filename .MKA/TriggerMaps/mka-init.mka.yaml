@@ -1,6 +1,6 @@
 id: mka-init
 intent: "Initialize the MKA directory structure in a project by cloning templates from GitHub using sparse-checkout."
-nodes:
+trigger_nodes:
   - file: "mka-cli/src/main.rs"
     method: "main"
     note: "Entry point that routes to the init command."
@@ -9,6 +9,6 @@ nodes:
     note: "Performs the sparse-checkout and setup logic."
   - file: "mka-cli/src/utils/mod.rs"
     method: "copy_dir_recursive"
-    note: "Recursively copies the cloned .MKA folder to the project root."
+    note: "Recursively copies the cloned templates folder to the project root."
 validation:
   test_file: "mka-cli/src/commands/init.rs"

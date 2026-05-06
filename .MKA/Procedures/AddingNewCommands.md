@@ -1,43 +1,38 @@
-# Procedure: Adding New Commands to MKA-CLI
+# Procedure: Adding New Commands to MKA CLI
 
-Follow this procedure to extend the `mka` utility with new functionality.
+The `mka` utility is built in Rust using `clap`. Follow these steps to extend the CLI.
 
 ## 1. Define the Command
-Add your new command to the `Commands` enum in `mka-cli/src/models/enums/cli_commands.rs`.
-- Use `clap` attributes for documentation and arguments.
-- Example:
-  ```rust
-  NewCommand {
-      #[arg(short, long)]
-      force: bool,
-  },
-  ```
-
-## 2. Create the Handler
-Create a new file `mka-cli/src/commands/<command_name>.rs`.
-- Implement a `pub fn handle(...) -> Result<()>` function.
-- Utilize `crate::analyzer`, `crate::models`, and `crate::utils` as needed.
-
-## 3. Register the Module
-Add the new module to `mka-cli/src/commands/mod.rs`:
+Add the new command variant to `mka-cli/src/models/enums.rs`:
 ```rust
-pub mod <command_name>;
+pub enum Commands {
+    // ...
+    NewCommand {
+        #[arg(short, long)]
+        option: bool,
+    },
+}
 ```
 
-## 4. Wire the Command
-Update the `match` statement in `mka-cli/src/main.rs` to call your new handler.
+## 2. Implement the Handler
+Create a new file `mka-cli/src/commands/new_command.rs`:
+```rust
+use anyhow::Result;
 
-## 5. Build and Run
-Build the utility in release mode for best performance:
-```bash
-cd mka-cli
-cargo build --release
+pub fn handle(option: bool) -> Result<()> {
+    // Your logic here
+    Ok(())
+}
+```
+Register the module in `mka-cli/src/commands/mod.rs`.
+
+## 3. Wire the Main Loop
+Update the `match` statement in `mka-cli/src/main.rs`:
+```rust
+match &cli.command {
+    Commands::NewCommand { option } => commands::new_command::handle(*option)?,
+}
 ```
 
-Run the binary:
-```bash
-./target/release/mka <your-command>
-```
-
-## 6. Document in MKA
-After adding the command, create a new workflow file in `.MKA/Workflows/` and add it to `.MKA/index.mka.yaml` so AI agents can utilize it.
+## 4. Documentation
+After adding the command, create a new **Trigger Map** file in `.MKA/TriggerMaps/` and add it to `.MKA/index.mka.yaml` so AI agents can utilize it.
