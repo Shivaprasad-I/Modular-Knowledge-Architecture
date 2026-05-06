@@ -9,6 +9,8 @@ jobs:
   publish:
     name: Publish for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       matrix:
         include:
