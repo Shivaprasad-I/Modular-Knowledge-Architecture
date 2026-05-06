@@ -28,16 +28,28 @@ pub fn handle(language: &str) -> Result<()> {
         return Err(anyhow!("Failed to clone repository: {}", repo_url));
     }
 
+    // Discover the correct source directory (handle monorepos like typescript)
+    let mut build_dir = temp_dir.clone();
+    if !temp_dir.join("src/parser.c").exists() {
+        let sub_dir = temp_dir.join(language);
+        if sub_dir.join("src/parser.c").exists() {
+            build_dir = sub_dir;
+        }
+    }
+
+    if !build_dir.join("src/parser.c").exists() {
+        return Err(anyhow!("Could not find src/parser.c in repository. This grammar might use a non-standard structure."));
+    }
+
     println!("Compiling parser...");
-    let ext = std::env::consts::DLL_EXTENSION;
-    let output_file = target_dir.join(format!("{}.{}", language, ext));
+    let output_file = target_dir.join(format!("{}.{}", language, "so"));
 
     let mut files = vec!["src/parser.c".to_string()];
     let mut is_cpp = false;
 
-    if temp_dir.join("src/scanner.c").exists() {
+    if build_dir.join("src/scanner.c").exists() {
         files.push("src/scanner.c".to_string());
-    } else if temp_dir.join("src/scanner.cc").exists() {
+    } else if build_dir.join("src/scanner.cc").exists() {
         files.push("src/scanner.cc".to_string());
         is_cpp = true;
     }
@@ -49,20 +61,20 @@ pub fn handle(language: &str) -> Result<()> {
             cmd.args(&["-O3", "-shared", "-fPIC", "-I./src"]);
             for f in &files { cmd.arg(f); }
             cmd.arg("-o").arg(&output_file);
-            cmd.current_dir(&temp_dir).status()
+            cmd.current_dir(&build_dir).status()
         } else {
             let mut cmd = Command::new("cl.exe");
             cmd.args(&["/LD", "/Isrc", "/O2"]);
             for f in &files { cmd.arg(f); }
             cmd.arg(format!("/Fe:{}", output_file.to_string_lossy()));
-            cmd.current_dir(&temp_dir).status()
+            cmd.current_dir(&build_dir).status()
         }
     } else {
         let mut cmd = Command::new(if is_cpp { "g++" } else { "gcc" });
         cmd.args(&["-O3", "-shared", "-fPIC", "-I./src"]);
         for f in &files { cmd.arg(f); }
         cmd.arg("-o").arg(&output_file);
-        cmd.current_dir(&temp_dir).status()
+        cmd.current_dir(&build_dir).status()
     }.context("Failed to execute C/C++ compiler. Ensure gcc, g++, or cl.exe is in your PATH.")?;
 
     if !status.success() {

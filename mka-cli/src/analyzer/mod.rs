@@ -15,8 +15,7 @@ impl DynamicLanguageLoader {
     }
 
     pub fn load_language(&mut self, lang_name: &str) -> Result<tree_sitter::Language> {
-        let ext = std::env::consts::DLL_EXTENSION;
-        let path = Config::get_treesitter_dir().join(format!("{}.{}", lang_name, ext));
+        let path = Config::get_treesitter_dir().join(format!("{}.{}", lang_name, "so"));
 
         if path.exists() {
             unsafe {
@@ -194,9 +193,52 @@ impl SourceAnalyzer {
             return Ok(());
         }
 
-        if ["try_statement", "try_stmt", "handle_clause"].contains(&kind) {
-            result.push_str(" /* -- error handling -- */ ");
-            *current_pos = node.end_byte();
+        // Surgical removal of Python docstrings (strings that are direct children of a block)
+        if self.lang_name == "python" && kind == "string" {
+            if let Some(parent) = node.parent() {
+                if parent.kind() == "block" {
+                    *current_pos = node.end_byte();
+                    return Ok(());
+                }
+            }
+        }
+
+        let is_try_stmt = ["try_statement", "try_stmt", "handle_clause"].contains(&kind);
+        let is_finally_else_in_try = ["finally_clause", "else_clause"].contains(&kind) && 
+            node.parent().map_or(false, |p| ["try_statement", "try_stmt", "handle_clause"].contains(&p.kind()));
+
+        if is_try_stmt || is_finally_else_in_try {
+            for i in 0..node.child_count() {
+                let child = node.child(i).unwrap();
+                let c_kind = child.kind();
+                
+                // Skip keywords and clauses we want to omit entirely
+                if ["try", "catch", "except", "finally", "else", ":", "{", "}"].contains(&c_kind) {
+                    *current_pos = child.end_byte();
+                    continue;
+                }
+
+                if ["except_clause", "catch_clause"].contains(&c_kind) {
+                    *current_pos = child.end_byte();
+                    continue;
+                }
+
+                // If it's a block-like node, skip its braces
+                if ["compound_statement", "block", "statement_block"].contains(&c_kind) {
+                    for j in 0..child.child_count() {
+                        let grandchild = child.child(j).unwrap();
+                        if ["{", "}"].contains(&grandchild.kind()) {
+                            *current_pos = grandchild.end_byte();
+                            continue;
+                        }
+                        self.traverse_and_minify(grandchild, result, current_pos, _end_boundary)?;
+                    }
+                    *current_pos = child.end_byte();
+                    continue;
+                }
+                
+                self.traverse_and_minify(child, result, current_pos, _end_boundary)?;
+            }
             return Ok(());
         }
 
