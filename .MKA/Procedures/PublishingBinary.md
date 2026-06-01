@@ -5,6 +5,9 @@ This document outlines the process for building and publishing the `mka` utility
 ## 1. Automated Publishing (Recommended)
 This project uses GitHub Actions to automate the release process. 
 
+### Continuous Integration (CI)
+Every Push and Pull Request to `main` triggers a **CI Check** (`.github/workflows/ci.yml`). This ensures the project always compiles and passes tests before a release is even considered.
+
 ### Triggering a Release
 To trigger a new release and build binaries for all supported platforms:
 1.  Update the version in `mka-cli/Cargo.toml`.
@@ -17,14 +20,23 @@ To trigger a new release and build binaries for all supported platforms:
 
 The workflow defined in `.github/workflows/publish.yml` will automatically build the binaries and attach them to a new GitHub Release.
 
-## 2. Prerequisites (Manual Build)
+## 2. Pre-flight Verification (Crucial)
+To ensure the build will succeed in CI and across platforms, always run the local verification script before tagging a version or pushing major changes.
+
+```bash
+# From the project root
+./scripts/verify-build.sh
+```
+This script mirrors the CI environment by running `check`, `test`, and a full `release` build.
+
+## 3. Prerequisites (Manual Build)
 - [Rust](https://rustup.rs/) (Stable)
 - [cross](https://github.com/cross-rs/cross) (Optional, for simplified cross-compilation)
   ```bash
   cargo install cross --git https://github.com/cross-rs/cross
   ```
 
-## 3. Target Architectures
+## 4. Target Architectures
 The following targets are officially supported for `mka-cli`:
 
 | OS | Architecture | Target Triple |
@@ -35,7 +47,7 @@ The following targets are officially supported for `mka-cli`:
 | **macOS** | M1/M2/M3 | `aarch64-apple-darwin` |
 | **Windows** | x86_64 | `x86_64-pc-windows-msvc` |
 
-## 4. Manual Build Process
+## 5. Manual Build Process
 
 ### Standard Build (Current OS)
 ```bash
@@ -59,7 +71,7 @@ Ensure you have added the target via `rustup target add <target-triple>`.
 cargo build --release --target aarch64-apple-darwin
 ```
 
-## 5. Packaging
+## 6. Packaging
 Once built, the binaries are located in `mka-cli/target/<target-triple>/release/mka` (or `mka.exe` for Windows).
 
 ### Recommended Naming Convention
@@ -70,7 +82,7 @@ When uploading to GitHub Releases or a CDN:
 - `mka-macos-aarch64`
 - `mka-windows-x86_64.exe`
 
-## 6. Verification
+## 7. Verification
 Always verify the binary on the target architecture before finalized publishing.
 ```bash
 ./mka --version

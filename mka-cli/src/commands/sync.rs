@@ -80,7 +80,7 @@ fn heal_path(mka_root: &Path, old_path: &str) -> Option<String> {
     {
         // Strip the absolute mka_root prefix to store relative path in YAML
         if let Ok(rel_path) = entry.path().strip_prefix(mka_root) {
-            return Some(rel_path.to_string_lossy().to_string());
+            return Some(rel_path.to_string_lossy().replace('\\', "/"));
         }
     }
 

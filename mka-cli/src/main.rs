@@ -29,6 +29,8 @@ async fn main() -> Result<()> {
         Commands::Install { language } => commands::install::handle(language).await?,
         Commands::GetMethod { path, method } => commands::get_method::handle(path, method).await?,
         Commands::Mcp => commands::mcp::handle().await.map_err(|e| anyhow::anyhow!(e.to_string()))?,
+        Commands::ModelInstall => commands::model_install::handle().await?,
+        Commands::WorkflowSearch { query } => commands::workflow_search::handle(query.clone()).await?,
     }
 
 

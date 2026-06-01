@@ -20,7 +20,21 @@ tokio = { version = "1.35", features = ["full"] }
 rust-mcp-sdk = "0.9.0"
 async-trait = "0.1"
 async-recursion = "1.0"
+rusqlite = { version = "0.31", features = ["bundled"] }
+sqlite-vec = "0.1.9"
+ort = { version = "2.0.0-rc.12", features = ["download-binaries", "copy-dylibs"] }
+sha2 = "0.10"
+reqwest = { version = "0.11", features = ["json", "stream"] }
+dirs = "5.0"
+dialoguer = "0.11"
+indicatif = "0.17"
+futures-util = "0.3"
+tokenizers = "0.19"
 
 [dev-dependencies]
 tempfile = "3.8"
 # Removed include_dir as we are moving to remote cloning
+
+[patch.crates-io]
+esaxx-rs = { git = "https://github.com/ocentra/esaxx-rs.git", branch = "main" }
+

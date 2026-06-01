@@ -13,6 +13,7 @@ Do not index every file or class. MKA is strictly for **Functional Workflows**. 
 - **Automation:** Run `mka sync` regularly to detect and heal broken file paths in your workflows.
 
 ## 3. Best Practices
+- **Semantic Intents:** Write `intent` strings that are descriptive and use natural language keywords. Since semantic search relies on these strings, include synonyms or context (e.g., "Start MCP server (run daemon)") to improve discoverability.
 - **Atomic Intents:** Each workflow should have one clear `intent` string.
 - **Workflow Nodes Only:** List the files and methods involved. Do not write narrative logic in the YAML—MKA will extract **Snippets** automatically.
 - **Cross-Referencing:** If a node triggers another complete Workflow, use the `workflow: <id>` field instead of `file: <path>`. This allows the AI to traverse modular logic graphs without duplicating `.mka.yaml` file paths.
@@ -22,4 +23,5 @@ Do not index every file or class. MKA is strictly for **Functional Workflows**. 
 Before committing changes to the `.MKA` directory:
 1.  Verify the YAML against `schema.json`.
 2.  Run `mka workflow-list` to ensure the new workflow appears in the index.
-3.  Run `mka workflow-get <id> --snippets` to confirm the logic extraction is working as expected.
+3.  Run `mka workflow-search "<query>"` using a natural language query to confirm the new workflow is semantically discoverable.
+4.  Run `mka workflow-get <id> --snippets` to confirm the logic extraction is working as expected.

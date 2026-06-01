@@ -38,4 +38,13 @@ pub enum Commands {
     },
     /// Start an MCP server on stdio
     Mcp,
+    /// Install the embedding model for semantic search
+    #[command(name = "model-install")]
+    ModelInstall,
+    /// Search for workflows using natural language
+    #[command(name = "workflow-search")]
+    WorkflowSearch {
+        /// The search query
+        query: String,
+    },
 }
