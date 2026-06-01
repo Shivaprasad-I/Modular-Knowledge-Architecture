@@ -23,6 +23,12 @@ pub struct GetWorkflowTool {
 #[derive(Debug, serde::Deserialize, serde::Serialize, macros::JsonSchema)]
 pub struct SyncTool {}
 
+#[macros::mcp_tool(name = "mka_workflow_search", description = "Always use this tool first to find relevant workflows based on the user's request (e.g., 'add new command') instead of reading the entire index. It uses semantic search to find the closest match. If a highly relevant workflow is found, it will automatically return the technical map (TOON) for that workflow, saving you a step.")]
+#[derive(Debug, serde::Deserialize, serde::Serialize, macros::JsonSchema)]
+pub struct WorkflowSearchTool {
+    pub query: String,
+}
+
 #[derive(Default)]
 struct MkaHandler;
 
@@ -38,6 +44,7 @@ impl ServerHandler for MkaHandler {
                 ListWorkflowsTool::tool(),
                 GetWorkflowTool::tool(),
                 SyncTool::tool(),
+                WorkflowSearchTool::tool(),
             ],
             meta: None,
             next_cursor: None,
@@ -69,6 +76,14 @@ impl ServerHandler for MkaHandler {
                 match commands::sync::handle().await {
                     Ok(_) => Ok(CallToolResult::text_content(vec!["MKA synchronization complete.".into()])),
                     Err(e) => Ok(CallToolResult::text_content(vec![format!("Error syncing MKA: {}", e).into()])),
+                }
+            }
+            "mka_workflow_search" => {
+                let args: WorkflowSearchTool = serde_json::from_value(serde_json::Value::Object(params.arguments.unwrap_or_default()))
+                    .map_err(|e| CallToolError::invalid_arguments(params.name.clone(), Some(e.to_string())))?;
+                match commands::workflow_search::get_search_results(&args.query).await {
+                    Ok(output) => Ok(CallToolResult::text_content(vec![output.into()])),
+                    Err(e) => Ok(CallToolResult::text_content(vec![format!("Error searching workflows: {}", e).into()])),
                 }
             }
             _ => Err(CallToolError::unknown_tool(params.name)),
@@ -189,6 +204,7 @@ mod mcp_tests {
         assert!(tool_names.contains(&"mka_list_workflows".to_string()));
         assert!(tool_names.contains(&"mka_get_workflow".to_string()));
         assert!(tool_names.contains(&"mka_sync".to_string()));
+        assert!(tool_names.contains(&"mka_workflow_search".to_string()));
         assert!(!tool_names.contains(&"mka_get_method".to_string()));
     }
 }

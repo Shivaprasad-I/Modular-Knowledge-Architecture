@@ -73,6 +73,10 @@ pub fn get_language_from_path(path: &Path) -> Option<&'static str> {
     }
 }
 
+pub mod database;
+pub mod embeddings;
+#[cfg(test)]
+mod embeddings_tests;
 #[cfg(test)]
 mod tests;
 
