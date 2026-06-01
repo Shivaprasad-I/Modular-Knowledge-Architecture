@@ -1,11 +1,22 @@
 use std::path::Path;
-use std::fs;
-use std::process::Command;
 use anyhow::{Result, Context, anyhow};
 use crate::utils::copy_dir_recursive;
 use crate::models::configs::Config;
 
-pub fn handle() -> Result<()> {
+async fn run_git(args: &[&str], current_dir: &Path) -> Result<()> {
+    let status = tokio::process::Command::new("git")
+        .args(args)
+        .current_dir(current_dir)
+        .status()
+        .await
+        .context(format!("Failed to execute git {:?}", args))?;
+    if !status.success() {
+        return Err(anyhow!("Git command failed: {:?}", args));
+    }
+    Ok(())
+}
+
+pub async fn handle() -> Result<()> {
     let mka_dir = Path::new(Config::DIR_NAME);
     if mka_dir.exists() {
         println!("MKA already initialized.");
@@ -16,39 +27,27 @@ pub fn handle() -> Result<()> {
 
     let temp_dir = Path::new(Config::TEMP_DIR);
     if temp_dir.exists() {
-        fs::remove_dir_all(temp_dir)?;
+        tokio::fs::remove_dir_all(temp_dir).await?;
     }
-    fs::create_dir_all(temp_dir)?;
+    tokio::fs::create_dir_all(temp_dir).await?;
 
-    let run = |args: &[&str]| -> Result<()> {
-        let status = Command::new("git")
-            .args(args)
-            .current_dir(temp_dir)
-            .status()
-            .context(format!("Failed to execute git {:?}", args))?;
-        if !status.success() {
-            return Err(anyhow!("Git command failed: {:?}", args));
-        }
-        Ok(())
-    };
-
-    run(&["init"])?;
-    run(&["remote", "add", "origin", Config::REPO_URL])?;
-    run(&["sparse-checkout", "set", Config::TEMPLATE_DIR])?;
+    run_git(&["init"], temp_dir).await?;
+    run_git(&["remote", "add", "origin", Config::REPO_URL], temp_dir).await?;
+    run_git(&["sparse-checkout", "set", Config::TEMPLATE_DIR], temp_dir).await?;
     
-    if let Err(_) = run(&["pull", "--depth", "1", "origin", "main"]) {
-        run(&["pull", "--depth", "1", "origin", "master"])
+    if let Err(_) = run_git(&["pull", "--depth", "1", "origin", "main"], temp_dir).await {
+        run_git(&["pull", "--depth", "1", "origin", "master"], temp_dir).await
             .context("Failed to pull from both 'main' and 'master' branches.")?;
     }
 
     let source_templates = temp_dir.join(Config::TEMPLATE_DIR);
     if source_templates.exists() {
-        copy_dir_recursive(&source_templates, Path::new("."))?;
+        copy_dir_recursive(&source_templates, Path::new(".")).await?;
     } else {
         return Err(anyhow!("The repository does not contain a '{}' directory.", Config::TEMPLATE_DIR));
     }
 
-    fs::remove_dir_all(temp_dir)?;
+    tokio::fs::remove_dir_all(temp_dir).await?;
 
     println!("Initialized MKA project structure from templates.");
     Ok(())

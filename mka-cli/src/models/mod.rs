@@ -6,28 +6,28 @@ use serde::{Deserialize, Serialize};
 pub struct MkaIndex {
     pub project: String,
     pub version: f32,
-    pub trigger_maps: Vec<TriggerMapSummary>,
+    pub workflows: Vec<WorkflowSummary>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TriggerMapSummary {
+pub struct WorkflowSummary {
     pub id: String,
     pub intent: String,
     pub path: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TriggerMap {
+pub struct Workflow {
     pub id: String,
     pub intent: String,
-    pub trigger_nodes: Vec<TriggerNode>,
+    pub workflow_nodes: Vec<WorkflowNode>,
     pub validation: Option<Validation>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TriggerNode {
+pub struct WorkflowNode {
     pub file: Option<String>,
-    pub trigger_map: Option<String>,
+    pub workflow: Option<String>,
     pub method: Option<String>,
     pub note: Option<String>,
 }

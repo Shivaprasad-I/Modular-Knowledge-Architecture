@@ -1,31 +1,30 @@
 use std::path::Path;
-use std::fs;
 use anyhow::Result;
-use crate::models::{MkaIndex, TriggerMap};
+use crate::models::{MkaIndex, Workflow};
 use crate::analyzer::{DynamicLanguageLoader, SourceAnalyzer};
 
 use crate::utils::find_mka_root;
 use crate::models::configs::Config;
 
-pub fn handle() -> Result<()> {
+pub async fn handle() -> Result<()> {
     let mka_root = find_mka_root()?;
     let mka_folder = Config::get_mka_folder()?;
     let index_path = Config::get_index_file()?;
-    let index_content = fs::read_to_string(&index_path)?;
+    let index_content = tokio::fs::read_to_string(&index_path).await?;
     let index: MkaIndex = serde_yaml::from_str(&index_content)?;
 
     let mut loader = DynamicLanguageLoader::new();
 
-    for summary in &index.trigger_maps {
+    for summary in &index.workflows {
         let map_path = mka_folder.join(&summary.path);
-        let map_content = fs::read_to_string(&map_path)?;
-        let mut trigger_map: TriggerMap = serde_yaml::from_str(&map_content)?;
+        let map_content = tokio::fs::read_to_string(&map_path).await?;
+        let mut workflow: Workflow = serde_yaml::from_str(&map_content)?;
 
         let mut changed = false;
-        println!("Checking Trigger Map: {}", trigger_map.id);
+        println!("Checking Workflow: {}", workflow.id);
 
-        for node in &mut trigger_map.trigger_nodes {
-            if node.trigger_map.is_some() {
+        for node in &mut workflow.workflow_nodes {
+            if node.workflow.is_some() {
                 continue; // Skip cross-references
             }
 
@@ -44,7 +43,7 @@ pub fn handle() -> Result<()> {
                 }
             } else {
                 // Verify method exists
-                let source = fs::read_to_string(&file_path)?;
+                let source = tokio::fs::read_to_string(&file_path).await?;
                 let lang_name = crate::utils::get_language_from_path(&file_path).unwrap_or("text");
                 if let Ok(lang) = loader.load_language(lang_name) {
                     let analyzer = SourceAnalyzer::new(lang, lang_name.to_string(), source);
@@ -57,14 +56,14 @@ pub fn handle() -> Result<()> {
         }
 
         if changed {
-            let updated_content = serde_yaml::to_string(&trigger_map)?;
-            fs::write(&map_path, updated_content)?;
-            println!("  Updated trigger map file: {}", summary.path);
+            let updated_content = serde_yaml::to_string(&workflow)?;
+            tokio::fs::write(&map_path, updated_content).await?;
+            println!("  Updated workflow file: {}", summary.path);
         }
     }
 
     let updated_index = serde_yaml::to_string(&index)?;
-    fs::write(&index_path, updated_index)?;
+    tokio::fs::write(&index_path, updated_index).await?;
 
     Ok(())
 }

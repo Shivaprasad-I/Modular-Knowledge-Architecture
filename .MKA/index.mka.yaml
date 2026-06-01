@@ -1,15 +1,24 @@
 project: Modular-Knowledge-Architecture
 version: 1.0
-trigger_maps:
+workflows:
 - id: mka-init
   intent: Initialize MKA by sparse-cloning the template structure from GitHub.
-  path: TriggerMaps/mka-init.mka.yaml
-- id: mka-actions
-  intent: List all available actions/trigger-maps in TOON format.
-  path: TriggerMaps/mka-actions.mka.yaml
-- id: mka-trigger-map-details
-  intent: Extract technical details (signatures, logic) for a trigger-map.
-  path: TriggerMaps/mka-trigger-map-details.mka.yaml
+  path: Workflows/mka-init.mka.yaml
+- id: mka-workflow-list
+  intent: List all available workflows in TOON format.
+  path: Workflows/mka-workflow-list.mka.yaml
+- id: mka-workflow-get
+  intent: Extract technical details (signatures, logic) for a workflow.
+  path: Workflows/mka-workflow-get.mka.yaml
 - id: mka-sync
   intent: Sync the MKA index and heal broken paths automatically.
-  path: TriggerMaps/mka-sync.mka.yaml
+  path: Workflows/mka-sync.mka.yaml
+- id: mka-mcp
+  intent: Start a Model Context Protocol (MCP) server over standard I/O.
+  path: Workflows/mka-mcp.mka.yaml
+- id: mka-install
+  intent: Install a Tree-sitter parser library (.so).
+  path: Workflows/mka-install.mka.yaml
+- id: mka-get-method
+  intent: Surgically extract a method's signature and minified logic.
+  path: Workflows/mka-get-method.mka.yaml

@@ -14,18 +14,18 @@ mod tests {
         assert_eq!(get_language_from_path(Path::new("test")), None);
     }
 
-    #[test]
-    fn test_validate_yaml_no_schema() {
-        let content = "id: test\nintent: test intent\ntrigger_nodes: []";
+    #[tokio::test]
+    async fn test_validate_yaml_no_schema() {
+        let content = "id: test\nintent: test intent\nworkflow_nodes: []";
         let dir = tempdir().unwrap();
         let schema_path = dir.path().join("non_existent_schema.json");
         
-        let result = validate_yaml(content, &schema_path);
+        let result = validate_yaml(content, &schema_path).await;
         assert!(result.is_ok());
     }
 
-    #[test]
-    fn test_validate_yaml_with_schema() {
+    #[tokio::test]
+    async fn test_validate_yaml_with_schema() {
         let dir = tempdir().unwrap();
         let schema_path = dir.path().join("schema.json");
         let schema_content = r#"{
@@ -39,10 +39,10 @@ mod tests {
 
         // Valid YAML
         let valid_content = "id: test_id";
-        assert!(validate_yaml(valid_content, &schema_path).is_ok());
+        assert!(validate_yaml(valid_content, &schema_path).await.is_ok());
 
         // Invalid YAML (missing required id)
         let invalid_content = "not_id: test_id";
-        assert!(validate_yaml(invalid_content, &schema_path).is_err());
+        assert!(validate_yaml(invalid_content, &schema_path).await.is_err());
     }
 }

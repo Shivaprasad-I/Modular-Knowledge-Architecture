@@ -35,4 +35,4 @@ match &cli.command {
 ```
 
 ## 4. Documentation
-After adding the command, create a new **Trigger Map** file in `.MKA/TriggerMaps/` and add it to `.MKA/index.mka.yaml` so AI agents can utilize it.
+After adding the command, create a new **Workflow** file in `.MKA/Workflows/` and add it to `.MKA/index.mka.yaml` so AI agents can utilize it.

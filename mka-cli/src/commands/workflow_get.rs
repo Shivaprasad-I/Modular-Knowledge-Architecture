@@ -1,51 +1,58 @@
-use std::fs;
 use anyhow::{Result, Context};
-use crate::models::{MkaIndex, TriggerMap};
+use crate::models::{MkaIndex, Workflow};
 use crate::utils::{validate_yaml, find_mka_root};
 use crate::analyzer::{DynamicLanguageLoader, SourceAnalyzer};
 use crate::models::configs::Config;
 
-pub fn handle(id: &str, snippets: bool) -> Result<()> {
+pub async fn handle(id: &str, snippets: bool) -> Result<()> {
+    let output = get_workflow_content(id, snippets).await?;
+    println!("{}", output);
+    Ok(())
+}
+
+pub async fn get_workflow_content(id: &str, snippets: bool) -> Result<String> {
     let index_path = Config::get_index_file()?;
-    let content = fs::read_to_string(&index_path)?;
+    let content = tokio::fs::read_to_string(&index_path).await?;
     let index: MkaIndex = serde_yaml::from_str(&content)?;
 
-    let map_summary = index.trigger_maps.iter()
+    let map_summary = index.workflows.iter()
         .find(|w| w.id == id)
-        .context(format!("Trigger Map '{}' not found in index.", id))?;
+        .context(format!("Workflow '{}' not found in index.", id))?;
 
     let map_path = Config::get_mka_folder()?.join(&map_summary.path);
-    let map_content = fs::read_to_string(&map_path)?;
+    let map_content = tokio::fs::read_to_string(&map_path).await?;
     
     let schema_path = Config::get_schema_file()?;
-    validate_yaml(&map_content, &schema_path)?;
+    validate_yaml(&map_content, &schema_path).await?;
     
-    let trigger_map: TriggerMap = serde_yaml::from_str(&map_content)?;
+    let workflow: Workflow = serde_yaml::from_str(&map_content)?;
     let project_root = find_mka_root()?;
 
+    let mut output = String::new();
+
     if snippets {
-        println!("# @mka:trigger-map:{}", trigger_map.id);
-        println!("**intent:** {}\n", trigger_map.intent);
+        output.push_str(&format!("# @mka:workflow:{}\n", workflow.id));
+        output.push_str(&format!("**intent:** {}\n\n", workflow.intent));
 
         let mut loader = DynamicLanguageLoader::new();
-        for node in trigger_map.trigger_nodes {
-            if let Some(ref ref_id) = node.trigger_map {
-                println!("### trigger-map: {}", ref_id);
+        for node in workflow.workflow_nodes {
+            if let Some(ref ref_id) = node.workflow {
+                output.push_str(&format!("### workflow: {}\n", ref_id));
                 if let Some(note) = &node.note {
-                    println!("**note:** {}", note);
+                    output.push_str(&format!("**note:** {}\n", note));
                 }
-                println!();
+                output.push('\n');
                 continue;
             }
 
             let file_path_str = node.file.as_deref().unwrap_or("[MISSING FILE]");
             let file_path = project_root.join(file_path_str);
             if !file_path.exists() {
-                println!("### file: {} [NOT FOUND]\n", file_path_str);
+                output.push_str(&format!("### file: {} [NOT FOUND]\n\n", file_path_str));
                 continue;
             }
 
-            let source = fs::read_to_string(&file_path)?;
+            let source = tokio::fs::read_to_string(&file_path).await?;
             let lang_name = crate::utils::get_language_from_path(&file_path).unwrap_or("text");
             let extension = file_path.extension().and_then(|s| s.to_str()).unwrap_or(lang_name);
 
@@ -56,36 +63,36 @@ pub fn handle(id: &str, snippets: bool) -> Result<()> {
                     
                     match analyzer.get_method_signature(method_name) {
                         Ok(_sig) => {
-                            println!("### file: {}", file_path_str);
+                            output.push_str(&format!("### file: {}\n", file_path_str));
                             if let Some(note) = &node.note {
-                                println!("**note:** {}", note);
+                                output.push_str(&format!("**note:** {}\n", note));
                             }
                             
                             if let Ok(minified) = analyzer.get_minified_logic(method_name) {
-                                println!("**snippet:**");
-                                println!("```{}", extension);
-                                println!("{}", minified);
-                                println!("```\n");
+                                output.push_str("**snippet:**\n");
+                                output.push_str(&format!("```{}\n", extension));
+                                output.push_str(&minified);
+                                output.push_str("\n```\n\n");
                             }
                         }
-                        Err(e) => println!("### file: {} [ERROR: {}]\n", file_path_str, e),
+                        Err(e) => output.push_str(&format!("### file: {} [ERROR: {}]\n\n", file_path_str, e)),
                     }
                 }
-                Err(e) => println!("### file: {} [ERROR: {}]\n", file_path_str, e),
+                Err(e) => output.push_str(&format!("### file: {} [ERROR: {}]\n\n", file_path_str, e)),
             }
         }
     } else {
         let mut map_obj = serde_json::Map::new();
-        map_obj.insert("intent".to_string(), serde_json::json!(trigger_map.intent));
+        map_obj.insert("intent".to_string(), serde_json::json!(workflow.intent));
 
         let mut loader = DynamicLanguageLoader::new();
         let mut nodes_array = Vec::new();
 
-        for node in trigger_map.trigger_nodes {
+        for node in workflow.workflow_nodes {
             let mut node_obj = serde_json::Map::new();
             
-            if let Some(ref ref_id) = node.trigger_map {
-                node_obj.insert("trigger_map".to_string(), serde_json::json!(ref_id));
+            if let Some(ref ref_id) = node.workflow {
+                node_obj.insert("workflow".to_string(), serde_json::json!(ref_id));
                 if let Some(note) = &node.note {
                     node_obj.insert("note".to_string(), serde_json::json!(note));
                 }
@@ -103,7 +110,7 @@ pub fn handle(id: &str, snippets: bool) -> Result<()> {
                 continue;
             }
 
-            let source = fs::read_to_string(&file_path)?;
+            let source = tokio::fs::read_to_string(&file_path).await?;
             let lang_name = crate::utils::get_language_from_path(&file_path).unwrap_or("text");
 
             if lang_name == "text" {
@@ -136,14 +143,14 @@ pub fn handle(id: &str, snippets: bool) -> Result<()> {
             nodes_array.push(serde_json::json!(node_obj));
         }
 
-        map_obj.insert("trigger_nodes".to_string(), serde_json::json!(nodes_array));
+        map_obj.insert("workflow_nodes".to_string(), serde_json::json!(nodes_array));
 
         let value = serde_json::json!({
-            format!("@mka:trigger-map:{}", trigger_map.id): map_obj
+            format!("@mka:workflow:{}", workflow.id): map_obj
         });
 
-        println!("{}", toon::encode(&value, None));
+        output.push_str(&toon::encode(&value, None));
     }
 
-    Ok(())
+    Ok(output)
 }

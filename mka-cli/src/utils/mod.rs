@@ -1,5 +1,4 @@
 use std::path::{Path, PathBuf};
-use std::fs;
 use anyhow::{Result, Context, anyhow};
 use serde_json::Value;
 use jsonschema::JSONSchema;
@@ -19,12 +18,12 @@ pub fn find_mka_root() -> Result<PathBuf> {
     }
 }
 
-pub fn validate_yaml(content: &str, schema_path: &Path) -> Result<Value> {
+pub async fn validate_yaml(content: &str, schema_path: &Path) -> Result<Value> {
     let yaml_value: Value = serde_yaml::from_str(content)
         .context("Failed to parse YAML content")?;
     
     if schema_path.exists() {
-        let schema_content = fs::read_to_string(schema_path)?;
+        let schema_content = tokio::fs::read_to_string(schema_path).await?;
         let schema_json: Value = serde_json::from_str(&schema_content)?;
         let compiled = JSONSchema::compile(&schema_json)
             .map_err(|e| anyhow!("Failed to compile schema: {}", e))?;
@@ -42,15 +41,16 @@ pub fn validate_yaml(content: &str, schema_path: &Path) -> Result<Value> {
     Ok(yaml_value)
 }
 
-pub fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
-    fs::create_dir_all(dst)?;
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let file_type = entry.file_type()?;
+#[async_recursion::async_recursion]
+pub async fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
+    tokio::fs::create_dir_all(dst).await?;
+    let mut dir = tokio::fs::read_dir(src).await?;
+    while let Some(entry) = dir.next_entry().await? {
+        let file_type = entry.file_type().await?;
         if file_type.is_dir() {
-            copy_dir_recursive(&entry.path(), &dst.join(entry.file_name()))?;
+            copy_dir_recursive(&entry.path(), &dst.join(entry.file_name())).await?;
         } else {
-            fs::copy(entry.path(), dst.join(entry.file_name()))?;
+            tokio::fs::copy(entry.path(), dst.join(entry.file_name())).await?;
         }
     }
     Ok(())

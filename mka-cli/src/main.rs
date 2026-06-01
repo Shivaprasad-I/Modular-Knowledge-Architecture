@@ -15,18 +15,20 @@ struct Cli {
     command: Commands,
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::Init => commands::init::handle()?,
-        Commands::Actions | Commands::Workflows => commands::actions::handle()?,
-        Commands::TriggerMap { id, no_snippets } => commands::trigger_map::handle(id, !*no_snippets)?,
-        Commands::Feature { id, no_view } => commands::trigger_map::handle(id, !*no_view)?,
+        Commands::Init => commands::init::handle().await?,
+        Commands::WorkflowList => commands::workflow_list::handle().await?,
+        Commands::WorkflowGet { id, no_snippets } => commands::workflow_get::handle(id, !*no_snippets).await?,
+        Commands::Feature { id, no_view } => commands::workflow_get::handle(id, !*no_view).await?,
 
-        Commands::Sync => commands::sync::handle()?,
-        Commands::Install { language } => commands::install::handle(language)?,
-        Commands::GetMethod { path, method } => commands::get_method::handle(path, method)?,
+        Commands::Sync => commands::sync::handle().await?,
+        Commands::Install { language } => commands::install::handle(language).await?,
+        Commands::GetMethod { path, method } => commands::get_method::handle(path, method).await?,
+        Commands::Mcp => commands::mcp::handle().await.map_err(|e| anyhow::anyhow!(e.to_string()))?,
     }
 
 

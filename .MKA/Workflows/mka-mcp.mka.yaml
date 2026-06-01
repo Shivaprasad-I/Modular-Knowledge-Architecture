@@ -1,0 +1,14 @@
+id: mka-mcp
+intent: "Start a Model Context Protocol (MCP) server over standard I/O to expose MKA tools to AI assistants."
+workflow_nodes:
+  - file: "mka-cli/src/main.rs"
+    method: "main"
+    note: "Routes the 'mcp' command to the MCP handler."
+  - file: "mka-cli/src/commands/mcp.rs"
+    method: "handle"
+    note: "Initializes the tokio runtime and starts the MCP server using StdioTransport."
+  - file: "mka-cli/src/commands/mcp.rs"
+    method: "handle_call_tool_request"
+    note: "Dispatches MCP tool calls (e.g., mka_list_workflows) to the corresponding MKA command handlers."
+validation:
+  test_file: "mka-cli/src/commands/mcp.rs"

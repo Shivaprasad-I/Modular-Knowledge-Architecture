@@ -1,10 +1,15 @@
 use std::path::Path;
-use std::fs;
 use anyhow::{Result, Context, anyhow};
 use crate::analyzer::{DynamicLanguageLoader, SourceAnalyzer};
 use crate::utils::get_language_from_path;
 
-pub fn handle(path: &str, method: &str) -> Result<()> {
+pub async fn handle(path: &str, method: &str) -> Result<()> {
+    let output = get_method_toon(path, method).await?;
+    println!("{}", output);
+    Ok(())
+}
+
+pub async fn get_method_toon(path: &str, method: &str) -> Result<String> {
     let file_path = Path::new(path);
     if !file_path.exists() {
         return Err(anyhow!("File not found: {}", path));
@@ -14,7 +19,7 @@ pub fn handle(path: &str, method: &str) -> Result<()> {
         .context(format!("Unsupported file extension: {:?}", file_path.extension()))?;
     let extension = file_path.extension().and_then(|s| s.to_str()).unwrap_or(lang_name);
 
-    let source = fs::read_to_string(file_path)?;
+    let source = tokio::fs::read_to_string(file_path).await?;
     let mut loader = DynamicLanguageLoader::new();
     
     let lang = loader.load_language(lang_name)?;
@@ -22,10 +27,10 @@ pub fn handle(path: &str, method: &str) -> Result<()> {
 
     let minified = analyzer.get_minified_logic(method)?;
     
-    println!("@mka:snippet:{}:{}", path, method);
-    println!("```{}", extension);
-    println!("{}", minified);
-    println!("```");
+    let mut output = format!("@mka:snippet:{}:{}\n", path, method);
+    output.push_str(&format!("```{}\n", extension));
+    output.push_str(&minified);
+    output.push_str("\n```");
 
-    Ok(())
+    Ok(output)
 }

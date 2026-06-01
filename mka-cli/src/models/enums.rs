@@ -4,19 +4,19 @@ use clap::{Subcommand};
 pub enum Commands {
     /// Initialize MKA in the current directory
     Init,
-    /// List all available actions
-    Actions,
-    /// Alias for actions
-    Workflows,
-    /// Get details of a specific trigger map
-    TriggerMap {
-        /// The ID of the action/trigger-map
+    /// List all available workflows
+    #[command(name = "workflow-list")]
+    WorkflowList,
+    /// Get details of a specific workflow
+    #[command(name = "workflow-get")]
+    WorkflowGet {
+        /// The ID of the workflow
         id: String,
         /// Suppress minified snippets and return TOON JSON
         #[arg(long)]
         no_snippets: bool,
     },
-    /// Alias for trigger-map
+    /// Alias for workflow-get
     Feature {
         id: String,
         #[arg(long)]
@@ -36,4 +36,6 @@ pub enum Commands {
         /// Name of the method
         method: String,
     },
+    /// Start an MCP server on stdio
+    Mcp,
 }

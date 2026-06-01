@@ -1,27 +1,26 @@
-use std::process::Command;
 use anyhow::{Result, anyhow, Context};
-use std::fs;
 use crate::models::configs::Config;
 
-pub fn handle(language: &str) -> Result<()> {
+pub async fn handle(language: &str) -> Result<()> {
     let target_dir = Config::get_treesitter_dir();
 
     if !target_dir.exists() {
-        fs::create_dir_all(&target_dir)?;
+        tokio::fs::create_dir_all(&target_dir).await?;
     }
 
     let temp_dir = std::env::temp_dir().join(format!("mka-ts-{}", language));
     if temp_dir.exists() {
-        let _ = fs::remove_dir_all(&temp_dir);
+        let _ = tokio::fs::remove_dir_all(&temp_dir).await;
     }
-    fs::create_dir_all(&temp_dir)?;
+    tokio::fs::create_dir_all(&temp_dir).await?;
 
     println!("Cloning tree-sitter-{} grammar...", language);
     let repo_url = format!("https://github.com/tree-sitter/tree-sitter-{}", language);
-    let status = Command::new("git")
+    let status = tokio::process::Command::new("git")
         .args(&["clone", "--depth", "1", &repo_url, "."])
         .current_dir(&temp_dir)
         .status()
+        .await
         .context("Failed to execute git clone. Is git installed?")?;
 
     if !status.success() {
@@ -56,32 +55,32 @@ pub fn handle(language: &str) -> Result<()> {
 
     let status = if cfg!(windows) {
         // Try to detect compiler
-        if Command::new("gcc").arg("--version").status().is_ok() {
-            let mut cmd = Command::new(if is_cpp { "g++" } else { "gcc" });
+        if tokio::process::Command::new("gcc").arg("--version").status().await.is_ok() {
+            let mut cmd = tokio::process::Command::new(if is_cpp { "g++" } else { "gcc" });
             cmd.args(&["-O3", "-shared", "-fPIC", "-I./src"]);
             for f in &files { cmd.arg(f); }
             cmd.arg("-o").arg(&output_file);
-            cmd.current_dir(&build_dir).status()
+            cmd.current_dir(&build_dir).status().await
         } else {
-            let mut cmd = Command::new("cl.exe");
+            let mut cmd = tokio::process::Command::new("cl.exe");
             cmd.args(&["/LD", "/Isrc", "/O2"]);
             for f in &files { cmd.arg(f); }
             cmd.arg(format!("/Fe:{}", output_file.to_string_lossy()));
-            cmd.current_dir(&build_dir).status()
+            cmd.current_dir(&build_dir).status().await
         }
     } else {
-        let mut cmd = Command::new(if is_cpp { "g++" } else { "gcc" });
+        let mut cmd = tokio::process::Command::new(if is_cpp { "g++" } else { "gcc" });
         cmd.args(&["-O3", "-shared", "-fPIC", "-I./src"]);
         for f in &files { cmd.arg(f); }
         cmd.arg("-o").arg(&output_file);
-        cmd.current_dir(&build_dir).status()
+        cmd.current_dir(&build_dir).status().await
     }.context("Failed to execute C/C++ compiler. Ensure gcc, g++, or cl.exe is in your PATH.")?;
 
     if !status.success() {
         return Err(anyhow!("Compilation failed."));
     }
 
-    let _ = fs::remove_dir_all(&temp_dir);
+    let _ = tokio::fs::remove_dir_all(&temp_dir).await;
     println!("Successfully installed {} parser to {:?}", language, output_file);
 
     Ok(())

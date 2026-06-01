@@ -1,12 +1,12 @@
-id: example-trigger-map
-intent: "Describe the high-level goal of this trigger-map."
-trigger_nodes:
+id: example-workflow
+intent: "Describe the high-level goal of this workflow."
+workflow_nodes:
   - file: "mka-cli/src/main.rs"
     method: "main"
     note: "Entry point of the MKA utility."
   - file: "mka-cli/src/main.rs"
-    method: "handle_action"
-    note: "Handles the 'action' command logic."
+    method: "handle_workflow"
+    note: "Handles the 'workflow' command logic."
   - file: "mka-cli/src/main.rs"
     method: "dummy_test"
     note: "Test for model detection."
