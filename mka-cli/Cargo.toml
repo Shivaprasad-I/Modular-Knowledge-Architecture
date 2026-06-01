@@ -24,7 +24,8 @@ rusqlite = { version = "0.31", features = ["bundled"] }
 sqlite-vec = "0.1.9"
 ort = { version = "2.0.0-rc.12", default-features = false, features = ["std", "ndarray", "download-binaries", "copy-dylibs", "tls-rustls"] }
 sha2 = "0.10"
-reqwest = { version = "0.11", features = ["json", "stream"] }
+reqwest = { version = "0.11", default-features = false, features = ["json", "stream", "rustls-tls"] }
+rustls = { version = "0.23", features = ["ring"] }
 dirs = "5.0"
 dialoguer = "0.11"
 indicatif = "0.17"
