@@ -39,12 +39,12 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install Cross
-        if: contains(matrix.target, 'linux')
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Build Binary
         run: |
-          if [ "${{ contains(matrix.target, 'linux') }}" = "true" ]; then
+          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
             cross build --release --target ${{ matrix.target }} --manifest-path mka-cli/Cargo.toml
           else
             cargo build --release --target ${{ matrix.target }} --manifest-path mka-cli/Cargo.toml
