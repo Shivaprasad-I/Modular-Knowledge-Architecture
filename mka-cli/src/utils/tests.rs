@@ -8,8 +8,14 @@ mod tests {
     #[test]
     fn test_get_language_from_path() {
         assert_eq!(get_language_from_path(Path::new("test.rs")), Some("rust"));
+        assert_eq!(get_language_from_path(Path::new("TEST.RS")), Some("rust"));
         assert_eq!(get_language_from_path(Path::new("test.py")), Some("python"));
         assert_eq!(get_language_from_path(Path::new("test.ts")), Some("typescript"));
+        assert_eq!(get_language_from_path(Path::new("test.js")), Some("typescript"));
+        assert_eq!(get_language_from_path(Path::new("test.kt")), Some("kotlin"));
+        assert_eq!(get_language_from_path(Path::new("test.cpp")), Some("cpp"));
+        assert_eq!(get_language_from_path(Path::new("test.sh")), Some("bash"));
+        assert_eq!(get_language_from_path(Path::new("test.html")), Some("html"));
         assert_eq!(get_language_from_path(Path::new("test.unknown")), None);
         assert_eq!(get_language_from_path(Path::new("test")), None);
     }

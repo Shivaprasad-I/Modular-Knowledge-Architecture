@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mka": {
+      "command": "mka",
+      "args": [
+        "mcp"
+      ],
+      "trust": true
+    }
+  }
+}

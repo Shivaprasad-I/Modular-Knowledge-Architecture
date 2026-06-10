@@ -43,6 +43,7 @@ impl Database {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn get_intent_hash(&self, id: &str) -> anyhow::Result<Option<String>> {
         let mut stmt = self.conn.prepare("SELECT intent_hash FROM workflow_meta WHERE id = ?")?;
         let mut rows = stmt.query([id])?;
@@ -53,6 +54,7 @@ impl Database {
         }
     }
 
+    #[allow(dead_code)]
     pub fn upsert_workflow(&self, id: &str, intent_hash: &str, embedding: &[f32]) -> anyhow::Result<()> {
         // Convert f32 slice to u8 slice for SQLite blob
         let embedding_bytes: &[u8] = unsafe {
@@ -125,6 +127,7 @@ impl Database {
         Ok(results)
     }
 
+    #[allow(dead_code)]
     pub fn cleanup_stale_workflows(&self, active_ids: &[String]) -> anyhow::Result<()> {
         if active_ids.is_empty() {
             self.conn.execute("DELETE FROM workflow_meta", [])?;

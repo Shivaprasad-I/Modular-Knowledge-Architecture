@@ -11,10 +11,15 @@ Every Push and Pull Request to `main` triggers a **CI Check** (`.github/workflow
 ### Triggering a Release
 To trigger a new release and build binaries for all supported platforms:
 1.  Update the version in `mka-cli/Cargo.toml`.
-2.  Commit and push the change.
+2.  Commit the version change:
+    ```bash
+    git add mka-cli/Cargo.toml
+    git commit -m "release: v0.1.0"
+    ```
 3.  Create and push a new git tag starting with `v` (e.g., `v0.1.0`):
     ```bash
     git tag v0.1.0
+    git push origin main
     git push origin v0.1.0
     ```
 

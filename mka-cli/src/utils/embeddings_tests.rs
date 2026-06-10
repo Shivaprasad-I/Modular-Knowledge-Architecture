@@ -5,6 +5,7 @@ mod tests {
 
     #[test]
     fn test_generate_embedding() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         // Skip if model is not installed
         let model_path = Config::get_model_path().unwrap();
         if !model_path.exists() {
@@ -25,6 +26,7 @@ mod tests {
 
     #[test]
     fn test_embedding_similarity() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let model_path = Config::get_model_path().unwrap();
         if !model_path.exists() {
             return;

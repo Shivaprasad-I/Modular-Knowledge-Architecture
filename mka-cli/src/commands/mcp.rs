@@ -9,24 +9,17 @@ use rust_mcp_sdk::{
 use std::sync::Arc;
 use crate::commands;
 
-#[macros::mcp_tool(name = "mka_list_workflows", description = "List all available MKA workflows for this project.")]
-#[derive(Debug, serde::Deserialize, serde::Serialize, macros::JsonSchema)]
-pub struct ListWorkflowsTool {}
-
 #[macros::mcp_tool(name = "mka_get_workflow", description = "Get the technical map (TOON) for a specific workflow. Use this to discover WHERE logic lives. This tool returns a list of files and methods involved in a feature.")]
 #[derive(Debug, serde::Deserialize, serde::Serialize, macros::JsonSchema)]
 pub struct GetWorkflowTool {
     pub id: String,
 }
 
-#[macros::mcp_tool(name = "mka_sync", description = "Sync the MKA index and heal broken workflow paths automatically.")]
-#[derive(Debug, serde::Deserialize, serde::Serialize, macros::JsonSchema)]
-pub struct SyncTool {}
-
-#[macros::mcp_tool(name = "mka_workflow_search", description = "Always use this tool first to find relevant workflows based on the user's request (e.g., 'add new command') instead of reading the entire index. It uses semantic search to find the closest match. If a highly relevant workflow is found, it will automatically return the technical map (TOON) for that workflow, saving you a step.")]
+#[macros::mcp_tool(name = "mka_workflow_search", description = "Find relevant workflows. You can pass a semantic `query` to search, or set `list_all` to true to list all workflows without semantic search. If a highly relevant workflow is found during semantic search, it will automatically return the technical map (TOON) for that workflow.")]
 #[derive(Debug, serde::Deserialize, serde::Serialize, macros::JsonSchema)]
 pub struct WorkflowSearchTool {
-    pub query: String,
+    pub query: Option<String>,
+    pub list_all: Option<bool>,
 }
 
 #[derive(Default)]
@@ -41,9 +34,7 @@ impl ServerHandler for MkaHandler {
     ) -> std::result::Result<ListToolsResult, RpcError> {
         Ok(ListToolsResult {
             tools: vec![
-                ListWorkflowsTool::tool(),
                 GetWorkflowTool::tool(),
-                SyncTool::tool(),
                 WorkflowSearchTool::tool(),
             ],
             meta: None,
@@ -57,12 +48,6 @@ impl ServerHandler for MkaHandler {
         _runtime: Arc<dyn McpServer>,
     ) -> std::result::Result<CallToolResult, CallToolError> {
         match params.name.as_str() {
-            "mka_list_workflows" => {
-                match commands::workflow_list::get_workflows_toon().await {
-                    Ok(output) => Ok(CallToolResult::text_content(vec![output.into()])),
-                    Err(e) => Ok(CallToolResult::text_content(vec![format!("Error listing workflows: {}", e).into()])),
-                }
-            }
             "mka_get_workflow" => {
                 let args: GetWorkflowTool = serde_json::from_value(serde_json::Value::Object(params.arguments.unwrap_or_default()))
                     .map_err(|e| CallToolError::invalid_arguments(params.name.clone(), Some(e.to_string())))?;
@@ -72,18 +57,21 @@ impl ServerHandler for MkaHandler {
                     Err(e) => Ok(CallToolResult::text_content(vec![format!("Error getting workflow {}: {}", args.id, e).into()])),
                 }
             }
-            "mka_sync" => {
-                match commands::sync::handle().await {
-                    Ok(_) => Ok(CallToolResult::text_content(vec!["MKA synchronization complete.".into()])),
-                    Err(e) => Ok(CallToolResult::text_content(vec![format!("Error syncing MKA: {}", e).into()])),
-                }
-            }
+
             "mka_workflow_search" => {
                 let args: WorkflowSearchTool = serde_json::from_value(serde_json::Value::Object(params.arguments.unwrap_or_default()))
                     .map_err(|e| CallToolError::invalid_arguments(params.name.clone(), Some(e.to_string())))?;
-                match commands::workflow_search::get_search_results(&args.query).await {
-                    Ok(output) => Ok(CallToolResult::text_content(vec![output.into()])),
-                    Err(e) => Ok(CallToolResult::text_content(vec![format!("Error searching workflows: {}", e).into()])),
+                if args.list_all.unwrap_or(false) {
+                    match commands::workflow_search::get_all_workflows_toon().await {
+                        Ok(output) => Ok(CallToolResult::text_content(vec![output.into()])),
+                        Err(e) => Ok(CallToolResult::text_content(vec![format!("Error listing workflows: {}", e).into()])),
+                    }
+                } else {
+                    let query = args.query.ok_or_else(|| CallToolError::invalid_arguments("query is required when list_all is false".to_string(), None))?;
+                    match commands::workflow_search::get_search_results(&query).await {
+                        Ok(output) => Ok(CallToolResult::text_content(vec![output.into()])),
+                        Err(e) => Ok(CallToolResult::text_content(vec![format!("Error searching workflows: {}", e).into()])),
+                    }
                 }
             }
             _ => Err(CallToolError::unknown_tool(params.name)),
@@ -103,7 +91,7 @@ pub async fn handle() -> SdkResult<()> {
             tasks: None,
         },
         instructions: Some("MKA acts as a high-density Navigation Map. Use these tools to find WHERE logic lives before performing standard file reads. \
-                           1. MAP CHECK: Always run `mka_list_workflows` to see the architectural intent. \
+                           1. SEMANTIC SEARCH: If you need to search for a concept, feature, or workflow, ALWAYS use `mka_workflow_search` first. You can pass a semantic query to search, or set `list_all` to true to list all workflows. Avoid standard file search tools (like grep/ripgrep) unless you cannot find the relevant workflow through the MKA tools. \
                            2. DISCOVERY: Use `mka_get_workflow` to see which files and methods are involved in a feature. Use this as your primary guide for where to perform standard `read_file` operations.".into()),
         meta: None,
         protocol_version: ProtocolVersion::V2025_11_25.into(),
@@ -201,9 +189,8 @@ mod mcp_tests {
         let result = handler.handle_list_tools_request(None, runtime).await.unwrap();
         
         let tool_names: Vec<String> = result.tools.iter().map(|t| t.name.clone()).collect();
-        assert!(tool_names.contains(&"mka_list_workflows".to_string()));
+        assert!(!tool_names.contains(&"mka_list_workflows".to_string()));
         assert!(tool_names.contains(&"mka_get_workflow".to_string()));
-        assert!(tool_names.contains(&"mka_sync".to_string()));
         assert!(tool_names.contains(&"mka_workflow_search".to_string()));
         assert!(!tool_names.contains(&"mka_get_method".to_string()));
     }

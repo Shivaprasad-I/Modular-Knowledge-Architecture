@@ -1,9 +1,12 @@
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use ort::session::Session;
 use ort::value::Value;
 use ort::session::builder::GraphOptimizationLevel;
 use tokenizers::Tokenizer;
 use crate::models::configs::Config;
+use std::sync::{Arc, Mutex};
+
+static EMBEDDER_CACHE: Mutex<Option<Arc<Mutex<Embedder>>>> = Mutex::new(None);
 
 pub struct Embedder {
     session: Session,
@@ -11,25 +14,35 @@ pub struct Embedder {
 }
 
 impl Embedder {
+    pub fn get_global_embedder() -> Result<Arc<Mutex<Self>>> {
+        let mut cache = EMBEDDER_CACHE.lock().map_err(|e| anyhow!("Failed to lock embedder cache: {}", e))?;
+        if let Some(ref embedder) = *cache {
+            return Ok(embedder.clone());
+        }
+        let embedder = Arc::new(Mutex::new(Self::new()?));
+        *cache = Some(embedder.clone());
+        Ok(embedder)
+    }
+
     pub fn new() -> Result<Self> {
         let model_path = Config::get_model_path()?;
         let tokenizer_path = Config::get_tokenizer_path()?;
 
         if !model_path.exists() || !tokenizer_path.exists() {
-            return Err(anyhow::anyhow!("Model or tokenizer not found. Run 'mka model-install' first."));
+            return Err(anyhow!("Model or tokenizer not found. Run 'mka model-install' first."));
         }
 
         let session = Session::builder()
-            .map_err(|e| anyhow::anyhow!("{:?}", e))?
+            .map_err(|e| anyhow!("{:?}", e))?
             .with_optimization_level(GraphOptimizationLevel::Level3)
-            .map_err(|e| anyhow::anyhow!("{:?}", e))?
+            .map_err(|e| anyhow!("{:?}", e))?
             .with_intra_threads(4)
-            .map_err(|e| anyhow::anyhow!("{:?}", e))?
+            .map_err(|e| anyhow!("{:?}", e))?
             .commit_from_file(model_path)
-            .map_err(|e| anyhow::anyhow!("{:?}", e))?;
+            .map_err(|e| anyhow!("{:?}", e))?;
 
         let tokenizer = Tokenizer::from_file(tokenizer_path)
-            .map_err(|e| anyhow::anyhow!("Failed to load tokenizer: {}", e))?;
+            .map_err(|e| anyhow!("Failed to load tokenizer: {}", e))?;
 
         Ok(Self {
             session,

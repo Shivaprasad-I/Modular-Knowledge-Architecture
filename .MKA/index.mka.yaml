@@ -4,15 +4,12 @@ workflows:
 - id: mka-init
   intent: Initialize MKA by sparse-cloning the template structure from GitHub.
   path: Workflows/mka-init.mka.yaml
-- id: mka-workflow-list
-  intent: List all available workflows in TOON format.
-  path: Workflows/mka-workflow-list.mka.yaml
+- id: mka-workflow-search
+  intent: Search for workflows using natural language or list all available workflows.
+  path: Workflows/mka-workflow-search.mka.yaml
 - id: mka-workflow-get
   intent: Extract technical details (signatures, logic) for a workflow.
   path: Workflows/mka-workflow-get.mka.yaml
-- id: mka-sync
-  intent: Sync the MKA index and heal broken paths automatically.
-  path: Workflows/mka-sync.mka.yaml
 - id: mka-mcp
   intent: Start a Model Context Protocol (MCP) server over standard I/O.
   path: Workflows/mka-mcp.mka.yaml
@@ -22,3 +19,6 @@ workflows:
 - id: mka-get-method
   intent: Surgically extract a method's signature and minified logic.
   path: Workflows/mka-get-method.mka.yaml
+- id: mka-model-install
+  intent: Download and install the semantic search ONNX model and tokenizer.
+  path: Workflows/mka-model-install.mka.yaml

@@ -10,7 +10,6 @@ Do not index every file or class. MKA is strictly for **Functional Workflows**. 
 ## 2. Maintenance Lifecycle
 - **New Workflows:** When a new high-level capability is added, create a `.mka.yaml` file in `Workflows/`.
 - **Maintenance:** Update existing workflows only when the functional path changes (e.g., a method is renamed or the data flow is rerouted).
-- **Automation:** Run `mka sync` regularly to detect and heal broken file paths in your workflows.
 
 ## 3. Best Practices
 - **Semantic Intents:** Write `intent` strings that are descriptive and use natural language keywords. Since semantic search relies on these strings, include synonyms or context (e.g., "Start MCP server (run daemon)") to improve discoverability.
@@ -22,6 +21,6 @@ Do not index every file or class. MKA is strictly for **Functional Workflows**. 
 ## 4. Finalizing Changes
 Before committing changes to the `.MKA` directory:
 1.  Verify the YAML against `schema.json`.
-2.  Run `mka workflow-list` to ensure the new workflow appears in the index.
+2.  Run `mka workflow-search --listAll` to ensure the new workflow appears in the index.
 3.  Run `mka workflow-search "<query>"` using a natural language query to confirm the new workflow is semantically discoverable.
 4.  Run `mka workflow-get <id> --snippets` to confirm the logic extraction is working as expected.

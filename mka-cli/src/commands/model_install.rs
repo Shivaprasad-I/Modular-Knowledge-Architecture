@@ -9,21 +9,24 @@ pub async fn handle() -> Result<()> {
     let model_path = Config::get_model_path()?;
     let tokenizer_path = Config::get_tokenizer_path()?;
 
+    let config = Config::load_config(None);
     println!("Installing semantic search model...");
 
     download_file(
-        "https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx",
+        config.model_url(),
         &model_path,
         "Downloading model (80MB)"
     ).await?;
 
     download_file(
-        "https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer.json",
+        config.tokenizer_url(),
         &tokenizer_path,
         "Downloading tokenizer"
     ).await?;
 
-    println!("Model installed successfully to {}", Config::get_app_data_dir()?.display());
+    println!("Model installed successfully:");
+    println!("  Model: {}", model_path.display());
+    println!("  Tokenizer: {}", tokenizer_path.display());
     Ok(())
 }
 

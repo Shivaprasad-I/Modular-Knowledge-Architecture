@@ -6,15 +6,19 @@ use streaming_iterator::StreamingIterator;
 use crate::models::configs::Config;
 
 pub struct DynamicLanguageLoader {
-    libs: Vec<Library>,
+    libs: std::collections::HashMap<String, (Library, tree_sitter::Language)>,
 }
 
 impl DynamicLanguageLoader {
     pub fn new() -> Self {
-        Self { libs: Vec::new() }
+        Self { libs: std::collections::HashMap::new() }
     }
 
     pub fn load_language(&mut self, lang_name: &str) -> Result<tree_sitter::Language> {
+        if let Some((_, lang)) = self.libs.get(lang_name) {
+            return Ok(lang.clone());
+        }
+
         let path = Config::get_treesitter_dir().join(format!("{}.{}", lang_name, "so"));
 
         if path.exists() {
@@ -25,7 +29,7 @@ impl DynamicLanguageLoader {
                 let func: Symbol<unsafe extern "C" fn() -> tree_sitter::Language> = lib.get(symbol_name.as_bytes())
                     .map_err(|e| anyhow!("Failed to find symbol {} in {:?}: {}", symbol_name, path, e))?;
                 let lang = func();
-                self.libs.push(lib);
+                self.libs.insert(lang_name.to_string(), (lib, lang.clone()));
                 return Ok(lang);
             }
         }

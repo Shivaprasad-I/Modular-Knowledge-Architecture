@@ -1,7 +1,21 @@
 use anyhow::{Result, anyhow, Context};
 use crate::models::configs::Config;
 
-pub async fn handle(language: &str) -> Result<()> {
+pub async fn handle(language: Option<&str>, list: bool) -> Result<()> {
+    if list {
+        let mut supported_langs: Vec<&str> = crate::utils::languages::LanguageRegistry::MAPPINGS.iter()
+            .map(|m| m.name)
+            .collect();
+        supported_langs.sort();
+        supported_langs.dedup();
+        println!("Supported tree-sitter parsers:");
+        for lang in supported_langs {
+            println!("  - {}", lang);
+        }
+        return Ok(());
+    }
+
+    let language = language.ok_or_else(|| anyhow!("Language name is required when not listing supported parsers."))?;
     let target_dir = Config::get_treesitter_dir();
 
     if !target_dir.exists() {
@@ -84,4 +98,22 @@ pub async fn handle(language: &str) -> Result<()> {
     println!("Successfully installed {} parser to {:?}", language, output_file);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_install_list_supported() {
+        let result = handle(None, true).await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_install_requires_language_when_no_list() {
+        let result = handle(None, false).await;
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "Language name is required when not listing supported parsers.");
+    }
 }

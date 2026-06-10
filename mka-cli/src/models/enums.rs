@@ -4,30 +4,29 @@ use clap::{Subcommand};
 pub enum Commands {
     /// Initialize MKA in the current directory
     Init,
-    /// List all available workflows
-    #[command(name = "workflow-list")]
-    WorkflowList,
     /// Get details of a specific workflow
     #[command(name = "workflow-get")]
     WorkflowGet {
         /// The ID of the workflow
         id: String,
-        /// Suppress minified snippets and return TOON JSON
+        /// Include minified snippets and return markdown format
         #[arg(long)]
-        no_snippets: bool,
+        snippets: bool,
     },
     /// Alias for workflow-get
     Feature {
         id: String,
         #[arg(long)]
-        no_view: bool,
+        view: bool,
     },
-    /// Sync the MKA index and heal broken paths
-    Sync,
     /// Install a tree-sitter parser
     Install {
         /// Language to install (e.g., rust, python)
-        language: String,
+        #[arg(required_unless_present = "list")]
+        language: Option<String>,
+        /// List all supported languages/treesitters
+        #[arg(long, short)]
+        list: bool,
     },
     /// Surgically extract a method signature and logic
     GetMethod {
@@ -45,6 +44,10 @@ pub enum Commands {
     #[command(name = "workflow-search")]
     WorkflowSearch {
         /// The search query
-        query: String,
+        #[arg(required_unless_present = "list_all")]
+        query: Option<String>,
+        /// List all available workflows
+        #[arg(long = "listAll", alias = "list-all")]
+        list_all: bool,
     },
 }

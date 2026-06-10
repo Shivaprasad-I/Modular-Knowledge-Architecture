@@ -17,7 +17,7 @@ Verify the installation:
 ```bash
 mka --help
 ```
-*You should see `workflow-list` and `mcp` in the commands list.*
+*You should see `workflow-search` and `mcp` in the commands list.*
 
 ---
 
@@ -47,7 +47,33 @@ Add MKA to your `~/.gemini/settings.json`:
 
 ---
 
-## 🎭 3. Claude Desktop
+## 🛸 3. Antigravity CLI
+
+Antigravity CLI (`agy`) supports native plugins, making it extremely simple to install and configure MCP servers with a single command.
+
+### Fast Setup
+Run this command from the repository root:
+```bash
+agy plugin install templates/mka-plugin
+```
+
+### Manual Configuration
+Alternatively, you can manually configure it by creating or editing your global `~/.gemini/antigravity-cli/mcp_config.json` file:
+```json
+{
+  "mcpServers": {
+    "mka": {
+      "command": "mka",
+      "args": ["mcp"],
+      "trust": true
+    }
+  }
+}
+```
+
+---
+
+## 🎭 4. Claude Desktop
 
 Claude Desktop allows you to use MKA tools directly in the chat interface.
 
@@ -70,7 +96,7 @@ Claude Desktop allows you to use MKA tools directly in the chat interface.
 
 ---
 
-## 🖱️ 4. Cursor
+## 🖱️ 5. Cursor
 
 Cursor supports MCP servers to enhance its codebase indexing and agentic capabilities.
 
@@ -84,7 +110,7 @@ Cursor supports MCP servers to enhance its codebase indexing and agentic capabil
 
 ---
 
-## 🐱 5. GitHub Copilot (Extensions)
+## 🐱 6. GitHub Copilot (Extensions)
 
 For GitHub Copilot, MCP integration is typically handled via the **Copilot Extensions** or local proxy tools like `mcp-bridge`.
 
@@ -99,7 +125,7 @@ If you are using a local agent wrapper that supports MCP, point it to:
 
 MKA is designed to be your AI's **Navigation Map**. Instead of the AI guessing where code lives or grepping the entire project, it will:
 
-1. **Architectural Intent**: Call `mka_list_workflows` to see the high-level features.
+1. **Semantic Search / Listing**: Call `mka_workflow_search` to find relevant workflows using natural language, or set `list_all: true` to list all available workflows.
 2. **Location Discovery**: Call `mka_get_workflow` to get a technical map of files and methods.
 3. **Contextual Read**: Perform standard file reads on the exact targets identified by MKA.
 

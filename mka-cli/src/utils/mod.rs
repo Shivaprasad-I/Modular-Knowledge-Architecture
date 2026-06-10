@@ -57,24 +57,12 @@ pub async fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<()> {
 }
 
 pub fn get_language_from_path(path: &Path) -> Option<&'static str> {
-    let ext = path.extension()?.to_str()?;
-    match ext {
-        "rs" => Some("rust"),
-        "ts" | "tsx" | "js" | "jsx" => Some("typescript"),
-        "py" => Some("python"),
-        "cs" => Some("c-sharp"),
-        "go" => Some("go"),
-        "c" => Some("c"),
-        "cpp" | "cc" | "cxx" => Some("cpp"),
-        "java" => Some("java"),
-        "rb" => Some("ruby"),
-        "php" => Some("php"),
-        _ => None,
-    }
+    languages::LanguageRegistry::get_language_from_path(path)
 }
 
 pub mod database;
 pub mod embeddings;
+pub mod languages;
 #[cfg(test)]
 mod embeddings_tests;
 #[cfg(test)]

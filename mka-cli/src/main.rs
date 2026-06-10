@@ -9,6 +9,7 @@ use crate::models::enums::Commands;
 
 #[derive(Parser)]
 #[command(name = "mka")]
+#[command(version)]
 #[command(about = "Modular Knowledge Architecture Utility for Token Efficiency", long_about = None)]
 struct Cli {
     #[command(subcommand)]
@@ -21,16 +22,14 @@ async fn main() -> Result<()> {
 
     match &cli.command {
         Commands::Init => commands::init::handle().await?,
-        Commands::WorkflowList => commands::workflow_list::handle().await?,
-        Commands::WorkflowGet { id, no_snippets } => commands::workflow_get::handle(id, !*no_snippets).await?,
-        Commands::Feature { id, no_view } => commands::workflow_get::handle(id, !*no_view).await?,
+        Commands::WorkflowGet { id, snippets } => commands::workflow_get::handle(id, *snippets).await?,
+        Commands::Feature { id, view } => commands::workflow_get::handle(id, *view).await?,
 
-        Commands::Sync => commands::sync::handle().await?,
-        Commands::Install { language } => commands::install::handle(language).await?,
+        Commands::Install { language, list } => commands::install::handle(language.as_deref(), *list).await?,
         Commands::GetMethod { path, method } => commands::get_method::handle(path, method).await?,
         Commands::Mcp => commands::mcp::handle().await.map_err(|e| anyhow::anyhow!(e.to_string()))?,
         Commands::ModelInstall => commands::model_install::handle().await?,
-        Commands::WorkflowSearch { query } => commands::workflow_search::handle(query.clone()).await?,
+        Commands::WorkflowSearch { query, list_all } => commands::workflow_search::handle(query.clone(), *list_all).await?,
     }
 
 
