@@ -242,7 +242,7 @@ pub async fn get_workflow_content_with_paths(
 mod tests {
     use super::*;
 
-    static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    use crate::models::configs::TEST_LOCK;
 
     #[tokio::test]
     async fn test_get_workflow_content_without_snippets() {
@@ -321,6 +321,7 @@ mod tests {
         std::fs::create_dir_all(mka_dir.join("Workflows")).unwrap();
         
         std::fs::write(mka_dir.join("schema.json"), r#"{"type": "object"}"#).unwrap();
+        std::fs::write(mka_dir.join("config.yaml"), "parsers_enabled: false\n").unwrap();
         
         let index_content = r#"
 project: test-project
