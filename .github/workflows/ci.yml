@@ -17,6 +17,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache Tree-sitter parsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.mka
+          key: ${{ runner.os }}-mka-treesitter-${{ hashFiles('mka-cli/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mka-treesitter-
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -30,6 +38,14 @@ jobs:
 
       - name: Cargo Check
         run: cargo check --manifest-path mka-cli/Cargo.toml
+
+      - name: Prepare Environment (Tree-sitter Parsers)
+        shell: bash
+        run: |
+          mkdir -p ~/.mka/treesitter-debug
+          if [ ! -f ~/.mka/treesitter-debug/rust.so ]; then
+            cargo run --manifest-path mka-cli/Cargo.toml -- install rust
+          fi
 
       - name: Run Tests
         # We skip some tests that require the ONNX model in CI unless we want to download it
