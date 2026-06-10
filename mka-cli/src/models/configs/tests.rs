@@ -9,8 +9,10 @@ mod tests {
     fn test_treesitter_dir_default() {
         let _guard = TEST_LOCK.lock().unwrap();
         let original_home = env::var("HOME");
-        // Mock HOME
+        let original_userprofile = env::var("USERPROFILE");
+        // Mock HOME and USERPROFILE
         env::set_var("HOME", "/home/testuser");
+        env::set_var("USERPROFILE", "/home/testuser");
         let dir = Config::get_treesitter_dir();
         
         let contains_correct_folder = if cfg!(debug_assertions) {
@@ -28,20 +30,29 @@ mod tests {
         } else {
             env::remove_var("HOME");
         }
+        if let Ok(val) = original_userprofile {
+            env::set_var("USERPROFILE", val);
+        } else {
+            env::remove_var("USERPROFILE");
+        }
     }
 
     #[test]
     fn test_load_config_user_level() {
         let _guard = TEST_LOCK.lock().unwrap();
         let temp_dir = tempfile::tempdir().unwrap();
+        let old_home = env::var("HOME");
         let old_xdg = env::var("XDG_CONFIG_HOME");
         let old_appdata = env::var("APPDATA");
+        let old_userprofile = env::var("USERPROFILE");
 
+        env::set_var("HOME", temp_dir.path());
         env::set_var("XDG_CONFIG_HOME", temp_dir.path());
         env::set_var("APPDATA", temp_dir.path());
+        env::set_var("USERPROFILE", temp_dir.path());
 
-        // Create user config directory and file
-        let user_config_dir = temp_dir.path().join("mka");
+        // Create user config directory and file using the getter
+        let user_config_dir = Config::get_user_config_dir().unwrap();
         std::fs::create_dir_all(&user_config_dir).unwrap();
         std::fs::write(user_config_dir.join("config.yaml"), "parsers_enabled: true\n").unwrap();
 
@@ -49,30 +60,28 @@ mod tests {
         assert!(config.parsers_enabled());
 
         // Restore env
-        if let Ok(ref val) = old_xdg {
-            env::set_var("XDG_CONFIG_HOME", val);
-        } else {
-            env::remove_var("XDG_CONFIG_HOME");
-        }
-        if let Ok(ref val) = old_appdata {
-            env::set_var("APPDATA", val);
-        } else {
-            env::remove_var("APPDATA");
-        }
+        if let Ok(ref val) = old_home { env::set_var("HOME", val); } else { env::remove_var("HOME"); }
+        if let Ok(ref val) = old_xdg { env::set_var("XDG_CONFIG_HOME", val); } else { env::remove_var("XDG_CONFIG_HOME"); }
+        if let Ok(ref val) = old_appdata { env::set_var("APPDATA", val); } else { env::remove_var("APPDATA"); }
+        if let Ok(ref val) = old_userprofile { env::set_var("USERPROFILE", val); } else { env::remove_var("USERPROFILE"); }
     }
 
     #[test]
     fn test_config_overrides() {
         let _guard = TEST_LOCK.lock().unwrap();
         let temp_dir = tempfile::tempdir().unwrap();
+        let old_home = env::var("HOME");
         let old_xdg = env::var("XDG_CONFIG_HOME");
         let old_appdata = env::var("APPDATA");
+        let old_userprofile = env::var("USERPROFILE");
 
+        env::set_var("HOME", temp_dir.path());
         env::set_var("XDG_CONFIG_HOME", temp_dir.path());
         env::set_var("APPDATA", temp_dir.path());
+        env::set_var("USERPROFILE", temp_dir.path());
 
-        // Create user config directory and file
-        let user_config_dir = temp_dir.path().join("mka");
+        // Create user config directory and file using the getter
+        let user_config_dir = Config::get_user_config_dir().unwrap();
         std::fs::create_dir_all(&user_config_dir).unwrap();
         
         let config_yaml = r#"
@@ -104,30 +113,28 @@ schema_file: "/custom/schema.json"
         assert_eq!(Config::get_treesitter_dir().to_str().unwrap(), "/custom/treesitter");
 
         // Restore env
-        if let Ok(ref val) = old_xdg {
-            env::set_var("XDG_CONFIG_HOME", val);
-        } else {
-            env::remove_var("XDG_CONFIG_HOME");
-        }
-        if let Ok(ref val) = old_appdata {
-            env::set_var("APPDATA", val);
-        } else {
-            env::remove_var("APPDATA");
-        }
+        if let Ok(ref val) = old_home { env::set_var("HOME", val); } else { env::remove_var("HOME"); }
+        if let Ok(ref val) = old_xdg { env::set_var("XDG_CONFIG_HOME", val); } else { env::remove_var("XDG_CONFIG_HOME"); }
+        if let Ok(ref val) = old_appdata { env::set_var("APPDATA", val); } else { env::remove_var("APPDATA"); }
+        if let Ok(ref val) = old_userprofile { env::set_var("USERPROFILE", val); } else { env::remove_var("USERPROFILE"); }
     }
 
     #[test]
     fn test_custom_paths_parent_directory_creation() {
         let _guard = TEST_LOCK.lock().unwrap();
         let temp_dir = tempfile::tempdir().unwrap();
+        let old_home = env::var("HOME");
         let old_xdg = env::var("XDG_CONFIG_HOME");
         let old_appdata = env::var("APPDATA");
+        let old_userprofile = env::var("USERPROFILE");
 
+        env::set_var("HOME", temp_dir.path());
         env::set_var("XDG_CONFIG_HOME", temp_dir.path());
         env::set_var("APPDATA", temp_dir.path());
+        env::set_var("USERPROFILE", temp_dir.path());
 
-        // Create user config directory and file with parent path in temp_dir
-        let user_config_dir = temp_dir.path().join("mka");
+        // Create user config directory and file using the getter
+        let user_config_dir = Config::get_user_config_dir().unwrap();
         std::fs::create_dir_all(&user_config_dir).unwrap();
 
         let test_parent = temp_dir.path().join("nested_folder");
@@ -156,15 +163,9 @@ schema_file: "/custom/schema.json"
         assert!(test_parent.exists());
 
         // Restore env
-        if let Ok(ref val) = old_xdg {
-            env::set_var("XDG_CONFIG_HOME", val);
-        } else {
-            env::remove_var("XDG_CONFIG_HOME");
-        }
-        if let Ok(ref val) = old_appdata {
-            env::set_var("APPDATA", val);
-        } else {
-            env::remove_var("APPDATA");
-        }
+        if let Ok(ref val) = old_home { env::set_var("HOME", val); } else { env::remove_var("HOME"); }
+        if let Ok(ref val) = old_xdg { env::set_var("XDG_CONFIG_HOME", val); } else { env::remove_var("XDG_CONFIG_HOME"); }
+        if let Ok(ref val) = old_appdata { env::set_var("APPDATA", val); } else { env::remove_var("APPDATA"); }
+        if let Ok(ref val) = old_userprofile { env::set_var("USERPROFILE", val); } else { env::remove_var("USERPROFILE"); }
     }
 }

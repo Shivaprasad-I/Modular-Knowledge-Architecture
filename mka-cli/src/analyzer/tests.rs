@@ -5,7 +5,10 @@ mod tests {
     fn get_parser(loader: &mut DynamicLanguageLoader, lang: &str) -> Option<tree_sitter::Language> {
         match loader.load_language(lang) {
             Ok(l) => Some(l),
-            Err(_) => {
+            Err(e) => {
+                if std::env::var("MKA_STRICT_TESTS").is_ok() {
+                    panic!("Strict Mode: Failed to load Tree-sitter parser for '{}': {:?}", lang, e);
+                }
                 println!("Skipping test: Tree-sitter parser for '{}' not found.", lang);
                 None
             }
@@ -14,6 +17,7 @@ mod tests {
 
     #[test]
     fn test_extract_method_signature_rust() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let mut loader = DynamicLanguageLoader::new();
         let Some(lang) = get_parser(&mut loader, "rust") else { return; };
         
@@ -31,6 +35,7 @@ mod tests {
 
     #[test]
     fn test_minify_logic_rust_spacing_and_comments() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let mut loader = DynamicLanguageLoader::new();
         let Some(lang) = get_parser(&mut loader, "rust") else { return; };
         
@@ -59,6 +64,7 @@ mod tests {
 
     #[test]
     fn test_minify_logic_python_preserves_indentation() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let mut loader = DynamicLanguageLoader::new();
         let Some(lang) = get_parser(&mut loader, "python") else { return; };
         
@@ -98,6 +104,7 @@ def my_function():
 
     #[test]
     fn test_minify_logic_python_try_except() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let mut loader = DynamicLanguageLoader::new();
         let Some(lang) = get_parser(&mut loader, "python") else { return; };
         
@@ -121,6 +128,7 @@ def func_with_try():
 
     #[test]
     fn test_minify_logic_python_try_except_else_finally() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let mut loader = DynamicLanguageLoader::new();
         let Some(lang) = get_parser(&mut loader, "python") else { return; };
         
@@ -147,6 +155,7 @@ def complex_try():
 
     #[test]
     fn test_minify_logic_javascript_try_finally() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let mut loader = DynamicLanguageLoader::new();
         let Some(lang) = get_parser(&mut loader, "javascript") else { return; };
         
@@ -170,6 +179,7 @@ def complex_try():
 
     #[test]
     fn test_minify_logic_various_comments() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let mut loader = DynamicLanguageLoader::new();
         let Some(lang) = get_parser(&mut loader, "python") else { return; };
         
@@ -192,6 +202,7 @@ def func():
 
     #[test]
     fn test_minify_logic_typescript_try_finally() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let mut loader = DynamicLanguageLoader::new();
         let Some(lang) = get_parser(&mut loader, "typescript") else { return; };
         
@@ -215,6 +226,7 @@ def func():
 
     #[test]
     fn test_minify_logic_csharp_try_finally() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let mut loader = DynamicLanguageLoader::new();
         let Some(lang) = get_parser(&mut loader, "c-sharp") else { return; };
         
@@ -238,6 +250,7 @@ def func():
 
     #[test]
     fn test_minify_logic_rust_try_block_simulation() {
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
         let mut loader = DynamicLanguageLoader::new();
         let Some(lang) = get_parser(&mut loader, "rust") else { return; };
         
