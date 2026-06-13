@@ -108,6 +108,19 @@ parsers_enabled: false
 
 ---
 
+## 📊 Performance & Token Optimization
+
+MKA is designed to drastically reduce "context noise" and save tokens during AI-assisted development. By navigating codebases using a map-first workflow protocol, the LLM avoids exploratory directory scraping.
+
+A profiling run comparing **Antigravity CLI (`agy`)** connected over Model Context Protocol (MCP) using `Gemini 3.5 Flash` shows:
+* **33.2% Reduction** in the active model footprint (generation & tool call costs).
+* **70.4% Reduction** in exploratory tool call tokens (saving time and API calls).
+* **15.4% Reduction** in overall active session context size.
+
+For step-by-step reproduction steps, detailed analysis, and visual TUI benchmarks, see [Metrics/README.md](https://github.com/Shivaprasad-I/Modular-Knowledge-Architecture/blob/main/Metrics/README.md).
+
+---
+
 ## Notes
 
 * MKA was born and raised on Linux. That's where it has seen the most testing and real-world use.
