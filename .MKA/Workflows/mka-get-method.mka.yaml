@@ -3,12 +3,9 @@ intent: "Surgically extract a method's signature and minified logic from a sourc
 workflow_nodes:
   - file: "mka-cli/src/main.rs"
     method: "main"
-    note: "Routes the 'get-method' command."
   - file: "mka-cli/src/commands/get_method.rs"
     method: "handle"
-    note: "Primary logic for locating and minifying a specific method."
   - file: "mka-cli/src/analyzer/mod.rs"
     method: "get_minified_logic"
-    note: "Core tree-traversal and whitespace stripping logic."
 validation:
-  test_file: "mka-cli/src/commands/get_method.rs"
+  test_file: "mka-cli/src/analyzer/tests.rs"

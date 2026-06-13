@@ -5,6 +5,20 @@ mod tests {
 
     use crate::models::configs::TEST_LOCK;
 
+    struct CwdGuard(std::path::PathBuf);
+    impl CwdGuard {
+        fn new(new_path: &std::path::Path) -> Self {
+            let old_path = std::env::current_dir().unwrap();
+            std::env::set_current_dir(new_path).unwrap();
+            Self(old_path)
+        }
+    }
+    impl Drop for CwdGuard {
+        fn drop(&mut self) {
+            let _ = std::env::set_current_dir(&self.0);
+        }
+    }
+
     #[test]
     fn test_treesitter_dir_default() {
         let _guard = TEST_LOCK.lock().unwrap();
@@ -41,6 +55,7 @@ mod tests {
     fn test_load_config_user_level() {
         let _guard = TEST_LOCK.lock().unwrap();
         let temp_dir = tempfile::tempdir().unwrap();
+        let _cwd_guard = CwdGuard::new(temp_dir.path());
         let old_home = env::var("HOME");
         let old_xdg = env::var("XDG_CONFIG_HOME");
         let old_appdata = env::var("APPDATA");
@@ -70,6 +85,7 @@ mod tests {
     fn test_config_overrides() {
         let _guard = TEST_LOCK.lock().unwrap();
         let temp_dir = tempfile::tempdir().unwrap();
+        let _cwd_guard = CwdGuard::new(temp_dir.path());
         let old_home = env::var("HOME");
         let old_xdg = env::var("XDG_CONFIG_HOME");
         let old_appdata = env::var("APPDATA");
@@ -123,6 +139,7 @@ schema_file: "/custom/schema.json"
     fn test_custom_paths_parent_directory_creation() {
         let _guard = TEST_LOCK.lock().unwrap();
         let temp_dir = tempfile::tempdir().unwrap();
+        let _cwd_guard = CwdGuard::new(temp_dir.path());
         let old_home = env::var("HOME");
         let old_xdg = env::var("XDG_CONFIG_HOME");
         let old_appdata = env::var("APPDATA");

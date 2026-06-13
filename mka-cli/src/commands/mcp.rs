@@ -9,13 +9,14 @@ use rust_mcp_sdk::{
 use std::sync::Arc;
 use crate::commands;
 
-#[macros::mcp_tool(name = "mka_get_workflow", description = "Get the technical map (TOON) for a specific workflow. Use this to discover WHERE logic lives. This tool returns a list of files and methods involved in a feature.")]
+#[macros::mcp_tool(name = "mka_get_workflow", description = "Get the technical map (TOON) for a specific workflow. Use this to discover WHERE logic lives. This tool returns a list of files and methods involved in a feature. Set 'snippets' to true to include code snippets.")]
 #[derive(Debug, serde::Deserialize, serde::Serialize, macros::JsonSchema)]
 pub struct GetWorkflowTool {
     pub id: String,
+    pub snippets: Option<bool>,
 }
 
-#[macros::mcp_tool(name = "mka_workflow_search", description = "Find relevant workflows. You can pass a semantic `query` to search, or set `list_all` to true to list all workflows without semantic search. If a highly relevant workflow is found during semantic search, it will automatically return the technical map (TOON) for that workflow.")]
+#[macros::mcp_tool(name = "mka_workflow_search", description = "Find relevant workflows. You can pass a semantic `query` to search, or set `list_all` to true to list all workflows without semantic search.")]
 #[derive(Debug, serde::Deserialize, serde::Serialize, macros::JsonSchema)]
 pub struct WorkflowSearchTool {
     pub query: Option<String>,
@@ -32,9 +33,18 @@ impl ServerHandler for MkaHandler {
         _request: Option<PaginatedRequestParams>,
         _runtime: Arc<dyn McpServer>,
     ) -> std::result::Result<ListToolsResult, RpcError> {
+        let mut get_workflow_tool = GetWorkflowTool::tool();
+        let config = crate::models::configs::Config::load_config(None);
+        if !config.parsers_enabled() {
+            get_workflow_tool.description = Some("Get the technical map (TOON) for a specific workflow. Use this to discover WHERE logic lives. This tool returns a list of files and methods involved in a feature.".to_string());
+            if let Some(ref mut properties) = get_workflow_tool.input_schema.properties {
+                properties.remove("snippets");
+            }
+        }
+
         Ok(ListToolsResult {
             tools: vec![
-                GetWorkflowTool::tool(),
+                get_workflow_tool,
                 WorkflowSearchTool::tool(),
             ],
             meta: None,
@@ -51,8 +61,9 @@ impl ServerHandler for MkaHandler {
             "mka_get_workflow" => {
                 let args: GetWorkflowTool = serde_json::from_value(serde_json::Value::Object(params.arguments.unwrap_or_default()))
                     .map_err(|e| CallToolError::invalid_arguments(params.name.clone(), Some(e.to_string())))?;
-                // snippets are forced to false for MCP stability
-                match commands::workflow_get::get_workflow_content(&args.id, false).await {
+                let config = crate::models::configs::Config::load_config(None);
+                let include_snippets = args.snippets.unwrap_or(config.parsers_enabled());
+                match commands::workflow_get::get_workflow_content(&args.id, include_snippets).await {
                     Ok(output) => Ok(CallToolResult::text_content(vec![output.into()])),
                     Err(e) => Ok(CallToolResult::text_content(vec![format!("Error getting workflow {}: {}", args.id, e).into()])),
                 }
@@ -193,5 +204,46 @@ mod mcp_tests {
         assert!(tool_names.contains(&"mka_get_workflow".to_string()));
         assert!(tool_names.contains(&"mka_workflow_search".to_string()));
         assert!(!tool_names.contains(&"mka_get_method".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_mka_get_workflow_snippets_option_visibility() {
+        use crate::models::configs::Config;
+        let _guard = crate::models::configs::TEST_LOCK.lock().unwrap();
+        let mka_folder = Config::get_mka_folder().unwrap();
+        let config_path = mka_folder.join("config.yaml");
+        let existed = config_path.exists();
+        let old_content = if existed { Some(std::fs::read_to_string(&config_path).unwrap()) } else { None };
+
+        struct ConfigGuard(std::path::PathBuf, Option<String>);
+        impl Drop for ConfigGuard {
+            fn drop(&mut self) {
+                if let Some(ref content) = self.1 {
+                    let _ = std::fs::write(&self.0, content);
+                } else {
+                    let _ = std::fs::remove_file(&self.0);
+                }
+            }
+        }
+        let _guard_config = ConfigGuard(config_path.clone(), old_content);
+
+        let handler = MkaHandler::default();
+        let runtime = Arc::new(MockRuntime::new());
+
+        // 1. With parsers_enabled: true -> snippets should be present
+        std::fs::write(&config_path, "parsers_enabled: true\n").unwrap();
+        let result = handler.handle_list_tools_request(None, runtime.clone()).await.unwrap();
+        let get_workflow_tool = result.tools.iter().find(|t| t.name == "mka_get_workflow").unwrap();
+        let properties = get_workflow_tool.input_schema.properties.as_ref().unwrap();
+        assert!(properties.contains_key("snippets"));
+        assert!(get_workflow_tool.description.as_ref().unwrap().contains("snippets"));
+
+        // 2. With parsers_enabled: false -> snippets should be removed
+        std::fs::write(&config_path, "parsers_enabled: false\n").unwrap();
+        let result = handler.handle_list_tools_request(None, runtime.clone()).await.unwrap();
+        let get_workflow_tool = result.tools.iter().find(|t| t.name == "mka_get_workflow").unwrap();
+        let properties = get_workflow_tool.input_schema.properties.as_ref().unwrap();
+        assert!(!properties.contains_key("snippets"));
+        assert!(!get_workflow_tool.description.as_ref().unwrap().contains("snippets"));
     }
 }

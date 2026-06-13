@@ -3,12 +3,11 @@ intent: "Search for workflows using natural language or list all available workf
 workflow_nodes:
   - file: "mka-cli/src/main.rs"
     method: "main"
-    note: "Routes to the workflow-search handler."
   - file: "mka-cli/src/commands/workflow_search.rs"
     method: "handle"
-    note: "Performs semantic search using embeddings or lists all workflows."
   - file: "mka-cli/src/utils/database.rs"
     method: "search"
-    note: "Queries the local SQLite database for matching workflow IDs."
+  - file: "mka-cli/src/utils/embeddings.rs"
+    method: "generate_embedding"
 validation:
   test_file: "mka-cli/src/commands/workflow_search.rs"

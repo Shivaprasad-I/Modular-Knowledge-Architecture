@@ -3,12 +3,9 @@ intent: "Extract technical details (signatures, logic) for a workflow."
 workflow_nodes:
   - file: "mka-cli/src/main.rs"
     method: "main"
-    note: "Routes to the workflow-get handler."
   - file: "mka-cli/src/commands/workflow_get.rs"
     method: "handle"
-    note: "Extracts logic and signatures for each node in the workflow."
   - file: "mka-cli/src/analyzer/mod.rs"
     method: "get_minified_logic"
-    note: "Core logic for surgical extraction."
 validation:
   test_file: "mka-cli/src/commands/workflow_get.rs"

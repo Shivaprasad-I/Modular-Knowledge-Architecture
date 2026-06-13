@@ -120,29 +120,7 @@ pub async fn get_search_results(query: &str) -> Result<String> {
     // Sort by boosted similarity
     results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
 
-    let top_score = results[0].1;
-    let best_id = &results[0].0;
-
-    // 7. Auto-fetch logic:
-    // We auto-fetch if:
-    // - Top score is very high (> 0.6)
-    // - OR Top score is positive (> 0.3) AND there's a clear gap (> 0.15)
-    
-    let should_auto_fetch = if results.len() == 1 {
-        top_score > 0.3
-    } else {
-        let second_score = results[1].1;
-        let gap = top_score - second_score;
-        top_score > 0.6 || (top_score > 0.3 && gap > 0.15)
-    };
-
-    if should_auto_fetch {
-        drop(db);
-        let content = crate::commands::workflow_get::get_workflow_content(best_id, false).await?;
-        return Ok(format!("@mka:search_result_perfect_match\nNote: Top match '{}' is highly relevant (score: {:.4}). Returning full details directly.\n\n{}", best_id, top_score, content));
-    }
-
-    // 8. Otherwise output the list in TOON format
+    // Output the list of results in TOON format
     let mut output = String::from("@mka:search_results\n");
     for (id, score) in results {
         output.push_str(&format!("- [{}]: (score: {:.4})\n", id, score));

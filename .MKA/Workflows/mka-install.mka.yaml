@@ -3,9 +3,7 @@ intent: "Install a Tree-sitter parser library (.so) to the centralized MKA confi
 workflow_nodes:
   - file: "mka-cli/src/main.rs"
     method: "main"
-    note: "Routes the 'install' command."
   - file: "mka-cli/src/commands/install.rs"
     method: "handle"
-    note: "Downloads and compiles the specified language parser using git and cargo."
 validation:
   test_file: "mka-cli/src/commands/install.rs"

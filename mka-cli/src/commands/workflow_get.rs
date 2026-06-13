@@ -57,7 +57,13 @@ pub async fn get_workflow_content_with_paths(
 
     if snippets {
         output.push_str(&format!("# @mka:workflow:{}\n", workflow.id));
-        output.push_str(&format!("**intent:** {}\n\n", workflow.intent));
+        output.push_str(&format!("**intent:** {}\n", workflow.intent));
+        if let Some(ref validation) = workflow.validation {
+            if let Some(ref test_file) = validation.test_file {
+                output.push_str(&format!("**validation:** {}\n", test_file));
+            }
+        }
+        output.push('\n');
 
         let mut loader = DynamicLanguageLoader::new();
         let mut missing_languages = Vec::new();
@@ -75,12 +81,22 @@ pub async fn get_workflow_content_with_paths(
             let file_path_str = node.file.as_deref().unwrap_or("[MISSING FILE]");
             let file_path = project_root.join(file_path_str);
             if !file_path.exists() {
-                output.push_str(&format!("### file: {} [NOT FOUND]\n\n", file_path_str));
+                output.push_str(&format!("### file: {} [NOT FOUND]\n", file_path_str));
+                if let Some(method) = &node.method {
+                    output.push_str(&format!("**method:** {}\n", method));
+                }
+                if let Some(note) = &node.note {
+                    output.push_str(&format!("**note:** {}\n", note));
+                }
+                output.push('\n');
                 continue;
             }
 
             if !parsers_enabled || node.method.is_none() {
                 output.push_str(&format!("### file: {}\n", file_path_str));
+                if let Some(method) = &node.method {
+                    output.push_str(&format!("**method:** {}\n", method));
+                }
                 if let Some(note) = &node.note {
                     output.push_str(&format!("**note:** {}\n", note));
                 }
@@ -111,7 +127,16 @@ pub async fn get_workflow_content_with_paths(
                                 output.push_str("\n```\n\n");
                             }
                         }
-                        Err(e) => output.push_str(&format!("### file: {} [ERROR: {}]\n\n", file_path_str, e)),
+                        Err(e) => {
+                            output.push_str(&format!("### file: {} [ERROR: {}]\n", file_path_str, e));
+                            if let Some(method) = &node.method {
+                                output.push_str(&format!("**method:** {}\n", method));
+                            }
+                            if let Some(note) = &node.note {
+                                output.push_str(&format!("**note:** {}\n", note));
+                            }
+                            output.push('\n');
+                        }
                     }
                 }
                 Err(e) => {
@@ -120,12 +145,22 @@ pub async fn get_workflow_content_with_paths(
                             missing_languages.push(lang_name.to_string());
                         }
                         output.push_str(&format!("### file: {}\n", file_path_str));
+                        if let Some(method) = &node.method {
+                            output.push_str(&format!("**method:** {}\n", method));
+                        }
                         if let Some(note) = &node.note {
                             output.push_str(&format!("**note:** {}\n", note));
                         }
                         output.push('\n');
                     } else {
-                        output.push_str(&format!("### file: {} [ERROR: {}]\n\n", file_path_str, e));
+                        output.push_str(&format!("### file: {} [ERROR: {}]\n", file_path_str, e));
+                        if let Some(method) = &node.method {
+                            output.push_str(&format!("**method:** {}\n", method));
+                        }
+                        if let Some(note) = &node.note {
+                            output.push_str(&format!("**note:** {}\n", note));
+                        }
+                        output.push('\n');
                     }
                 }
             }
@@ -141,6 +176,13 @@ pub async fn get_workflow_content_with_paths(
     } else {
         let mut map_obj = serde_json::Map::new();
         map_obj.insert("intent".to_string(), serde_json::json!(workflow.intent));
+        if let Some(ref validation) = workflow.validation {
+            if let Some(ref test_file) = validation.test_file {
+                let mut val_obj = serde_json::Map::new();
+                val_obj.insert("test_file".to_string(), serde_json::json!(test_file));
+                map_obj.insert("validation".to_string(), serde_json::json!(val_obj));
+            }
+        }
 
         let mut loader = DynamicLanguageLoader::new();
         let mut nodes_array = Vec::new();
@@ -163,12 +205,21 @@ pub async fn get_workflow_content_with_paths(
 
             let file_path = project_root.join(file_path_str);
             if !file_path.exists() {
+                if let Some(method) = &node.method {
+                    node_obj.insert("method".to_string(), serde_json::json!(method));
+                }
+                if let Some(note) = &node.note {
+                    node_obj.insert("note".to_string(), serde_json::json!(note));
+                }
                 node_obj.insert("error".to_string(), serde_json::json!("NOT FOUND"));
                 nodes_array.push(serde_json::json!(node_obj));
                 continue;
             }
 
             if !parsers_enabled || node.method.is_none() {
+                if let Some(method) = &node.method {
+                    node_obj.insert("method".to_string(), serde_json::json!(method));
+                }
                 if let Some(note) = &node.note {
                     node_obj.insert("note".to_string(), serde_json::json!(note));
                 }
@@ -180,6 +231,12 @@ pub async fn get_workflow_content_with_paths(
             let lang_name = crate::utils::get_language_from_path(&file_path).unwrap_or("text");
 
             if lang_name == "text" {
+                if let Some(method) = &node.method {
+                    node_obj.insert("method".to_string(), serde_json::json!(method));
+                }
+                if let Some(note) = &node.note {
+                    node_obj.insert("note".to_string(), serde_json::json!(note));
+                }
                 node_obj.insert("error".to_string(), serde_json::json!("UNSUPPORTED EXTENSION"));
                 nodes_array.push(serde_json::json!(node_obj));
                 continue;
@@ -198,6 +255,12 @@ pub async fn get_workflow_content_with_paths(
                             node_obj.insert("sig".to_string(), serde_json::json!(sig));
                         }
                         Err(e) => {
+                            if let Some(method) = &node.method {
+                                node_obj.insert("method".to_string(), serde_json::json!(method));
+                            }
+                            if let Some(note) = &node.note {
+                                node_obj.insert("note".to_string(), serde_json::json!(note));
+                            }
                             node_obj.insert("error".to_string(), serde_json::json!(e.to_string()));
                         }
                     }
@@ -207,10 +270,19 @@ pub async fn get_workflow_content_with_paths(
                         if !missing_languages.contains(&lang_name.to_string()) {
                             missing_languages.push(lang_name.to_string());
                         }
+                        if let Some(method) = &node.method {
+                            node_obj.insert("method".to_string(), serde_json::json!(method));
+                        }
                         if let Some(note) = &node.note {
                             node_obj.insert("note".to_string(), serde_json::json!(note));
                         }
                     } else {
+                        if let Some(method) = &node.method {
+                            node_obj.insert("method".to_string(), serde_json::json!(method));
+                        }
+                        if let Some(note) = &node.note {
+                            node_obj.insert("note".to_string(), serde_json::json!(note));
+                        }
                         node_obj.insert("error".to_string(), serde_json::json!(e.to_string()));
                     }
                 }
@@ -356,6 +428,8 @@ intent: "Test new behavior"
 workflow_nodes:
   - file: "test_file.rs"
     note: "A note without a method"
+validation:
+  test_file: "test_file.rs"
 "#;
         std::fs::write(mka_dir.join("Workflows/test-workflow.mka.yaml"), workflow_content_no_method).unwrap();
         std::fs::write(dir.path().join("test_file.rs"), "fn main() {}").unwrap();
@@ -365,6 +439,7 @@ workflow_nodes:
         let content_markdown = result_markdown.unwrap();
         assert!(content_markdown.contains("test_file.rs"));
         assert!(content_markdown.contains("A note without a method"));
+        assert!(content_markdown.contains("**validation:** test_file.rs"));
         assert!(!content_markdown.contains("snippet:"));
 
         let result_toon = get_workflow_content_with_paths("test-workflow", false, dir.path(), &mka_dir).await;
@@ -372,6 +447,8 @@ workflow_nodes:
         let content_toon = result_toon.unwrap();
         assert!(content_toon.contains("test_file.rs"));
         assert!(content_toon.contains("A note without a method"));
+        assert!(content_toon.contains("validation"));
+        assert!(content_toon.contains("test_file.rs"));
         assert!(!content_toon.contains("sig"));
 
         // 2. Test case: Parsers disabled by default (no warning for missing parser even if method is present)
@@ -391,7 +468,15 @@ workflow_nodes:
         let content_markdown_disabled = result_markdown_disabled.unwrap();
         assert!(content_markdown_disabled.contains("test_file.sql"));
         assert!(content_markdown_disabled.contains("A SQL query note"));
+        assert!(content_markdown_disabled.contains("**method:** query"));
         assert!(!content_markdown_disabled.contains("[LLM: Missing parsers:"));
+
+        let result_toon_disabled = get_workflow_content_with_paths("test-workflow", false, dir.path(), &mka_dir).await;
+        assert!(result_toon_disabled.is_ok());
+        let content_toon_disabled = result_toon_disabled.unwrap();
+        assert!(content_toon_disabled.contains("test_file.sql"));
+        assert!(content_toon_disabled.contains("query"));
+        assert!(content_toon_disabled.contains("A SQL query note"));
 
         // 3. Test case: Parsers enabled in config (should show warning note at the end)
         std::fs::write(mka_dir.join("config.yaml"), "parsers_enabled: true").unwrap();
@@ -401,6 +486,7 @@ workflow_nodes:
         let content_markdown_enabled = result_markdown_enabled.unwrap();
         assert!(content_markdown_enabled.contains("test_file.sql"));
         assert!(content_markdown_enabled.contains("A SQL query note"));
+        assert!(content_markdown_enabled.contains("**method:** query"));
         assert!(content_markdown_enabled.contains("[LLM: Missing parsers: sql."));
 
         let result_toon_enabled = get_workflow_content_with_paths("test-workflow", false, dir.path(), &mka_dir).await;
@@ -408,6 +494,87 @@ workflow_nodes:
         let content_toon_enabled = result_toon_enabled.unwrap();
         assert!(content_toon_enabled.contains("test_file.sql"));
         assert!(content_toon_enabled.contains("A SQL query note"));
+        assert!(content_toon_enabled.contains("query"));
         assert!(content_toon_enabled.contains("[LLM: Missing parsers: sql."));
+
+        // 4. Test case: File does not exist (should still output method and note, plus not found status)
+        let workflow_content_not_found = r#"
+id: test-workflow
+intent: "Test missing file behavior"
+workflow_nodes:
+  - file: "non_existent_file.rs"
+    method: "missing_method"
+    note: "A note on a missing file"
+"#;
+        std::fs::write(mka_dir.join("Workflows/test-workflow.mka.yaml"), workflow_content_not_found).unwrap();
+
+        let result_markdown_not_found = get_workflow_content_with_paths("test-workflow", true, dir.path(), &mka_dir).await;
+        assert!(result_markdown_not_found.is_ok());
+        let content_markdown_not_found = result_markdown_not_found.unwrap();
+        assert!(content_markdown_not_found.contains("non_existent_file.rs [NOT FOUND]"));
+        assert!(content_markdown_not_found.contains("**method:** missing_method"));
+        assert!(content_markdown_not_found.contains("**note:** A note on a missing file"));
+
+        let result_toon_not_found = get_workflow_content_with_paths("test-workflow", false, dir.path(), &mka_dir).await;
+        assert!(result_toon_not_found.is_ok());
+        let content_toon_not_found = result_toon_not_found.unwrap();
+        assert!(content_toon_not_found.contains("non_existent_file.rs"));
+        assert!(content_toon_not_found.contains("missing_method"));
+        assert!(content_toon_not_found.contains("A note on a missing file"));
+        assert!(content_toon_not_found.contains("NOT FOUND"));
+
+        // 5. Test case: Unsupported extension (e.g. .txt)
+        let workflow_content_unsupported = r#"
+id: test-workflow
+intent: "Test unsupported extension behavior"
+workflow_nodes:
+  - file: "test_file.txt"
+    method: "some_method"
+    note: "A note on unsupported file"
+"#;
+        std::fs::write(mka_dir.join("Workflows/test-workflow.mka.yaml"), workflow_content_unsupported).unwrap();
+        std::fs::write(dir.path().join("test_file.txt"), "hello world").unwrap();
+
+        let result_markdown_unsupported = get_workflow_content_with_paths("test-workflow", true, dir.path(), &mka_dir).await;
+        assert!(result_markdown_unsupported.is_ok());
+        let content_markdown_unsupported = result_markdown_unsupported.unwrap();
+        assert!(content_markdown_unsupported.contains("test_file.txt [ERROR:"));
+        assert!(content_markdown_unsupported.contains("**method:** some_method"));
+        assert!(content_markdown_unsupported.contains("**note:** A note on unsupported file"));
+
+        let result_toon_unsupported = get_workflow_content_with_paths("test-workflow", false, dir.path(), &mka_dir).await;
+        assert!(result_toon_unsupported.is_ok());
+        let content_toon_unsupported = result_toon_unsupported.unwrap();
+        assert!(content_toon_unsupported.contains("test_file.txt"));
+        assert!(content_toon_unsupported.contains("some_method"));
+        assert!(content_toon_unsupported.contains("A note on unsupported file"));
+        assert!(content_toon_unsupported.contains("UNSUPPORTED EXTENSION"));
+
+        // 6. Test case: Analyzer error (method not found in file) or parser load error
+        let workflow_content_analyzer_err = r#"
+id: test-workflow
+intent: "Test analyzer error behavior"
+workflow_nodes:
+  - file: "test_file.rs"
+    method: "non_existent_function"
+    note: "A note on function not in file"
+"#;
+        std::fs::write(mka_dir.join("Workflows/test-workflow.mka.yaml"), workflow_content_analyzer_err).unwrap();
+        std::fs::write(dir.path().join("test_file.rs"), "fn main() {}").unwrap();
+
+        let result_markdown_analyzer = get_workflow_content_with_paths("test-workflow", true, dir.path(), &mka_dir).await;
+        assert!(result_markdown_analyzer.is_ok());
+        let content_markdown_analyzer = result_markdown_analyzer.unwrap();
+        assert!(content_markdown_analyzer.contains("test_file.rs [ERROR:"));
+        assert!(content_markdown_analyzer.contains("**method:** non_existent_function"));
+        assert!(content_markdown_analyzer.contains("**note:** A note on function not in file"));
+
+        let result_toon_analyzer = get_workflow_content_with_paths("test-workflow", false, dir.path(), &mka_dir).await;
+        assert!(result_toon_analyzer.is_ok());
+        let content_toon_analyzer = result_toon_analyzer.unwrap();
+        assert!(content_toon_analyzer.contains("test_file.rs"));
+        assert!(content_toon_analyzer.contains("non_existent_function"));
+        assert!(content_toon_analyzer.contains("A note on function not in file"));
+        assert!(content_toon_analyzer.contains("error"));
     }
 }

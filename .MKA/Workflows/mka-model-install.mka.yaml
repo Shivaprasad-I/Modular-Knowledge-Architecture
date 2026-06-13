@@ -3,7 +3,5 @@ intent: "Download and install the semantic search ONNX model and tokenizer using
 workflow_nodes:
   - file: "mka-cli/src/main.rs"
     method: "main"
-    note: "Routes the 'model-install' command."
   - file: "mka-cli/src/commands/model_install.rs"
     method: "handle"
-    note: "Downloads the model and tokenizer files using the configured URLs and paths."
